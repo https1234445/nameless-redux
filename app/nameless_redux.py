@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.5.0-rc1"
+VERSION = "3.5.0-rc2"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -2098,6 +2098,10 @@ class ReduxWindow(QMainWindow):
             target.updateGeometry()
             target.update()
             if isinstance(target, QScrollArea):
+                # A newly opened page must begin at its top, with the thumb
+                # at the corresponding topmost position.
+                target.verticalScrollBar().setValue(0)
+                target.horizontalScrollBar().setValue(0)
                 target.viewport().update()
                 if target.widget() is not None:
                     target.widget().update()
