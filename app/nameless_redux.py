@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.3.0-dev"
+VERSION = "2.4.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -770,11 +770,11 @@ class ReduxWindow(QMainWindow):
         self.setWindowTitle(f"{APP_NAME}  •  {VERSION}")
         self.network = QNetworkAccessManager(self)
         self.steam_timer = QTimer(self)
-        self.steam_timer.setInterval(3500)
+        self.steam_timer.setInterval(6500)
         self.steam_timer.timeout.connect(self.refresh_steam_status)
         self._fade_animation = None
         self.resize(1360, 850)
-        self.setMinimumSize(1000, 650)
+        self.setMinimumSize(1050, 680)
         self.audio_files = self.read_json_setting("audio/files", [])
         self.audio_files = [str(p) for p in self.audio_files if isinstance(p, str) and Path(p).is_file()]
         self.profiles = self.read_json_setting("profiles", {})
@@ -851,7 +851,7 @@ class ReduxWindow(QMainWindow):
         content.setObjectName("contentSurface")
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(34, 22, 34, 26)
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(20)
         header = QHBoxLayout()
         self.page_title = QLabel("Overview")
         self.page_title.setObjectName("pageTitle")
@@ -883,7 +883,7 @@ class ReduxWindow(QMainWindow):
         self.navigate("Overview")
         self.steam_timer.start()
         QTimer.singleShot(500, self.refresh_steam_status)
-        QTimer.singleShot(900, self.load_official_screenshot)
+        QTimer.singleShot(900, self.load_initial_screenshot)
 
     def card(self, title, subtitle=None):
         frame = QFrame()
@@ -917,7 +917,7 @@ class ReduxWindow(QMainWindow):
         # Overview
         page = QWidget()
         l = QVBoxLayout(page)
-        l.setSpacing(16)
+        l.setSpacing(20)
         hero = GradientHero()
         self.hero = hero
         hero.setObjectName("heroCard")
@@ -997,6 +997,7 @@ class ReduxWindow(QMainWindow):
         l.addLayout(self.heading("VISUAL LAB", "Live color controls and real ROB RUN screenshot comparisons."))
         c, cl = self.card("COLOR PRESET", "Choose a base palette.")
         self.palette_combo = QComboBox()
+        self.palette_combo.setMinimumHeight(40)
         self.palette_combo.addItems(PRESETS.keys())
         cl.addWidget(self.palette_combo)
         self.intensity_label = QLabel("Intensity  •  65%")
@@ -1041,9 +1042,12 @@ class ReduxWindow(QMainWindow):
         effects_card, effects_layout = self.card(
             "ROB RUN VISUAL LAB", "Real Steam screenshot • before/after grading • live cinematic controls. Preview only.")
         self.effects_preview = EffectsPreview()
-        self.effects_preview.setMinimumHeight(430)
+        self.effects_preview.setToolTip(
+            "Drag the comparison divider to inspect your visual adjustments.")
+        self.effects_preview.setMinimumHeight(460)
         effects_layout.addWidget(self.effects_preview)
         screenshot_actions = QHBoxLayout()
+        screenshot_actions.setSpacing(12)
         for title, handler in [
             ("LOAD OFFICIAL ROB RUN SCREENSHOT", self.load_official_screenshot),
             ("CHOOSE MY ROB RUN SCREENSHOT", self.choose_preview_screenshot),
@@ -1052,8 +1056,8 @@ class ReduxWindow(QMainWindow):
             btn.clicked.connect(handler)
             screenshot_actions.addWidget(btn)
         effects_layout.addLayout(screenshot_actions)
-        self.preview_source = QLabel("Loading official Steam gameplay screenshot…")
-        self.preview_source.setObjectName("muted")
+        self.preview_source = QLabel("Official Steam screenshot loads automatically. You can replace it with your own F12 capture.")
+        self.preview_source.setObjectName("previewSource")
         self.preview_source.setWordWrap(True)
         effects_layout.addWidget(self.preview_source)
         compare_row = QHBoxLayout()
@@ -1394,6 +1398,15 @@ class ReduxWindow(QMainWindow):
         l.addStretch()
         self.add_page("Settings", page)
 
+    def load_initial_screenshot(self):
+        """Respect the user's real gameplay capture before fetching a Steam image."""
+        saved = self.settings.value("preview/screenshot", "")
+        if saved and Path(saved).is_file():
+            if self.effects_preview.set_screenshot(QImage(saved)):
+                self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(saved).name)
+                return
+        self.load_official_screenshot()
+
     def choose_preview_screenshot(self):
         filename, _ = QFileDialog.getOpenFileName(
             self, "Select a real ROB RUN screenshot", "",
@@ -1401,7 +1414,7 @@ class ReduxWindow(QMainWindow):
         if filename:
             image = QImage(filename)
             if self.effects_preview.set_screenshot(image):
-                self.preview_source.setText("REAL GAME SCREENSHOT • " + Path(filename).name)
+                self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(filename).name)
                 self.settings.setValue("preview/screenshot", filename)
             else:
                 QMessageBox.warning(self, "Image error", "Could not open the screenshot.")
@@ -1710,6 +1723,7 @@ class ReduxWindow(QMainWindow):
             "Visuals Studio": "Visual Lab",
             "Game Center": "Steam Connect",
         }.get(name, name))
+        self.statusBar().showMessage("WORKSPACE  /  " + name.upper(), 1600)
         for key in ["overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
             btn = getattr(self, "nav_" + key)
             btn.setChecked(btn.text().endswith(name))
@@ -2290,6 +2304,9 @@ class ReduxWindow(QMainWindow):
             QLabel#status { color: #E8A06C; font-size: 11px; font-weight: 600; }
             QLabel#sectionTitle { color: #F4F2EF; font-size: 21px; font-weight: 700; }
             QLabel#cardTitle { color: #D6D2CD; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+            QLabel#previewSource {
+                color: #B5A69B; font-size: 11px; padding: 8px 2px;
+            }
             QLabel#muted { color: #99999D; font-size: 12px; }
             QLabel#accent { color: #F0A66D; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
             QLabel#stat { color: #F5F2EB; font-size: 36px; font-weight: 700; }
