@@ -21,6 +21,24 @@ window.navigate("Overview")
 assert window.page_title.text() == "Dashboard"
 assert window.effects_preview.base.width() > 0
 assert window.top_game_status is not None
+# Verify every visual slider changes the filtered half of before/after.
+window.navigate("Visuals Studio")
+from PySide6.QtGui import QImage
+source = QImage(120, 70, QImage.Format_RGB32)
+source.fill(0xFF9B8050)
+assert window.effects_preview.set_screenshot(source)
+original = window.effects_preview.base.copy()
+for key, value in (("brightness", 30), ("contrast", 145),
+                   ("saturation", 0), ("warmth", 75)):
+    window.reset_effects()
+    window.effect_sliders[key].setValue(value)
+    window.update_effects_preview()
+    window.effects_preview.flush_effects()
+    assert window.effects_preview.filtered != original, key
+    assert window.effects_preview.base == original, "before must remain original"
+window.effects_preview._move_comparison(window.effects_preview.width() * .75)
+assert 0 <= window.effects_preview.compare_percent <= 100
+assert window.pages["Redux Collection"].verticalScrollBar().value() == 0
 window.steam_timer.stop()
 window.close()
 QTimer.singleShot(0, app.quit)
