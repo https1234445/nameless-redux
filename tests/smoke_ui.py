@@ -110,6 +110,20 @@ try:
         assert "install_path" not in data
 finally:
     QMessageBox.information = original_info
+# Reset restores an honest empty Redux state and refreshes the preview source.
+original_question = QMessageBox.question
+original_load = window.load_initial_screenshot
+calls = []
+QMessageBox.question = lambda *args, **kwargs: QMessageBox.Yes
+window.load_initial_screenshot = lambda: calls.append("reload")
+try:
+    window.reset_settings()
+    assert window.collection_active.text().endswith("NONE SELECTED")
+    assert window.settings.value("collection/active", "") == ""
+    assert calls == ["reload"]
+finally:
+    QMessageBox.question = original_question
+    window.load_initial_screenshot = original_load
 window.steam_timer.stop()
 window.close()
 QTimer.singleShot(0, app.quit)
