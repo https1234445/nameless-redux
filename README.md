@@ -1,14 +1,37 @@
-# NAMELESS REDUX — Ocean Edition
+# NAMELESS REDUX — ROB RUN Edition
 
-## First-time setup
+NAMELESS is a desktop catalog of curated visual **concepts** for ROB RUN. The main screen is **Redux Collection**, with Sakura Dream, Neon Night, Frostbite, and Crimson.
 
-1. Upload all files and folders from this starter package to the **root** of `https1234445/nameless-redux`, preserving `.github/workflows/windows-release.yml` and `app/nameless_redux.py`.
-2. Open **Actions → Windows release → Run workflow** to test a Windows build. A successful run produces downloadable artifacts, but does not publish a Release.
-3. To publish the first version, create a GitHub Release with tag `v1.5.1` (GitHub will create the tag). The workflow triggered by the tag builds the Windows app and uploads the release assets automatically. If the Release is created before the workflow completes, wait for the workflow to upload the assets.
-4. Download `NAMELESS Launcher.exe` from the Release **once**. Keep it in a convenient folder. Future app versions are fetched from GitHub Releases when launched.
+## Current features
 
-### How updates work
+- Browse four themed concepts and preview their color direction in Visual Lab.
+- **ACTIVATE IN NAMELESS** applies a complete set of local preview settings with one click and remembers the selected look.
+- **EXPORT LOOK** writes a portable `.json` preset describing the NAMELESS look (not game assets).
+- Compare a real ROB RUN screenshot using before/after visual adjustments. The app attempts to load an official Steam screenshot or lets you select your own.
+- Steam Connect discovers the installed game, shows a best-effort running status, and launches it through Steam.
+- Existing Theme Lab, Sound Library, Crosshair Studio, Profiles, and settings remain available.
 
-Publish a new GitHub Release with a higher tag (`v1.5.2`, etc.) after updating `app/nameless_redux.py`. The launcher downloads the latest release ZIP, checks its SHA256, extracts the application into `%LOCALAPPDATA%\NAMELESS REDUX\versions\<tag>` and starts it. Previous versions remain for offline fallback.
+### Important limitations
 
-**Limitations:** the initial Windows `.exe` must be built by GitHub Actions; local syntax checks are not Windows GUI runtime tests. The launcher trusts release assets in this repository, so secure your GitHub account with 2FA. This application does not modify ROB RUN itself.
+**NAMELESS does not currently install game modifications.** Pink skies, sakura weapon textures, flower bullet particles, and replacement sounds are planned **game-content packs**, not implemented features. The current presets affect only NAMELESS previews. A real one-click installer requires legally distributable assets, a verified compatible game modification mechanism, safe backups, and restore/uninstall support. No files in ROB RUN are modified by these presets.
+
+The catalog's colored art panels are concept visuals, **not actual gameplay screenshots**.
+
+## Windows build and release
+
+1. Go to **Actions → Windows release → Run workflow** to build a test artifact without publishing a release. The workflow now runs a syntax check and headless Qt UI smoke test before building.
+2. Download the resulting workflow artifact and test `NAMELESS REDUX.exe` on Windows: navigate all nine pages, select/activate/export a look, open Visual Lab, and test Steam Connect.
+3. **Only after testing**, create a GitHub Release with a new higher `v*` tag. The tag triggers the workflow to publish the application ZIP, checksum, and launcher executable.
+4. The existing `NAMELESS Launcher.exe` downloads the newest published release when run. Committing to `main` alone **does not** update installed launcher users.
+
+Do not publish an untested development build as a stable release.
+
+## Development
+
+```bash
+python -m pip install PySide6 numpy
+python -m py_compile app/nameless_redux.py launcher.py
+QT_QPA_PLATFORM=offscreen python tests/smoke_ui.py
+```
+
+Windows GitHub Actions runs the above checks automatically.
