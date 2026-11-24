@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.4.0-dev"
+VERSION = "2.5.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -772,6 +772,7 @@ class ReduxWindow(QMainWindow):
         self.steam_timer = QTimer(self)
         self.steam_timer.setInterval(6500)
         self.steam_timer.timeout.connect(self.refresh_steam_status)
+        self._last_game_running = False
         self._fade_animation = None
         self.resize(1360, 850)
         self.setMinimumSize(1050, 680)
@@ -1045,6 +1046,7 @@ class ReduxWindow(QMainWindow):
         self.effects_preview.setToolTip(
             "Drag the comparison divider to inspect your visual adjustments.")
         self.effects_preview.setMinimumHeight(460)
+        self.effects_preview.setObjectName("visualCanvas")
         effects_layout.addWidget(self.effects_preview)
         screenshot_actions = QHBoxLayout()
         screenshot_actions.setSpacing(12)
@@ -1056,7 +1058,7 @@ class ReduxWindow(QMainWindow):
             btn.clicked.connect(handler)
             screenshot_actions.addWidget(btn)
         effects_layout.addLayout(screenshot_actions)
-        self.preview_source = QLabel("Official Steam screenshot loads automatically. You can replace it with your own F12 capture.")
+        self.preview_source = QLabel("Loading real ROB RUN imagery • Steam screenshot or your own F12 capture")
         self.preview_source.setObjectName("previewSource")
         self.preview_source.setWordWrap(True)
         effects_layout.addWidget(self.preview_source)
@@ -1433,7 +1435,9 @@ class ReduxWindow(QMainWindow):
             if not shots:
                 raise ValueError("No screenshots published")
             url = QUrl(shots[0]["path_full"])
-            if url.scheme() != "https" or not url.host().endswith("steamstatic.com"):
+            if url.scheme() != "https" or not (
+                url.host() == "steamstatic.com" or url.host().endswith(".steamstatic.com")
+            ):
                 raise ValueError("Unexpected screenshot host")
             picture_reply = self.network.get(QNetworkRequest(url))
             picture_reply.finished.connect(lambda r=picture_reply: self._steam_image_ready(r))
@@ -1465,6 +1469,7 @@ class ReduxWindow(QMainWindow):
         if folder is None:
             self.steam_status.setText("● ROB RUN NOT FOUND IN STEAM LIBRARIES")
             self.top_game_status.setText("● ROB RUN  /  NOT FOUND")
+            self._last_game_running = False
             return
         if not self.game_path_input.text():
             self.game_path_input.setText(str(folder))
@@ -1473,11 +1478,25 @@ class ReduxWindow(QMainWindow):
             try:
                 flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
                 result = subprocess.run(
-                    ["tasklist", "/FI", "IMAGENAME eq ROB RUN.exe", "/FO", "CSV", "/NH"],
-                    capture_output=True, text=True, timeout=2, creationflags=flags)
-                running = "rob run.exe" in result.stdout.lower()
-            except (OSError, subprocess.TimeoutExpired):
+                    ["tasklist", "/FO", "CSV", "/NH"],
+                    capture_output=True, text=True, timeout=3, creationflags=flags)
+                # Steam's game process may use a different executable name.
+                # Only match executable names found in the installed game root.
+                import csv
+                from io import StringIO
+                candidates = {
+                    p.name.casefold() for p in folder.glob("*.exe") if p.is_file()
+                }
+                running = any(
+                    row and row[0].strip().casefold() in candidates
+                    for row in csv.reader(StringIO(result.stdout))
+                )
+            except (OSError, subprocess.TimeoutExpired, UnicodeError, csv.Error):
                 pass
+        if running and not self._last_game_running:
+            self.statusBar().showMessage(
+                "ROB RUN detected • Your NAMELESS workspace is ready", 5000)
+        self._last_game_running = running
         self.steam_status.setText(
             ("● ROB RUN RUNNING" if running else "● ROB RUN INSTALLED")
             + "  •  " + str(folder))
@@ -2290,6 +2309,10 @@ class ReduxWindow(QMainWindow):
                 letter-spacing: 2px; padding-left: 12px;
             }
             QFrame#headerRule { background: #303136; border: none; }
+            QWidget#visualCanvas {
+                background-color: #101114; border: 1px solid #3B3B40;
+                border-radius: 12px;
+            }
             QPushButton#primaryAction {
                 background: #E6A16D; color: #171412;
                 border: 1px solid #E6A16D; font-weight: 800;
