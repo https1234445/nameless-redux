@@ -24,7 +24,13 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python tests/smoke_ui.py
       - name: Build app
-        run: pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS REDUX" app/nameless_redux.py
+        shell: pwsh
+        run: |
+          $assets = @()
+          if (Test-Path "app/assets/rob_run_preview.jpg") {
+            $assets = @("--add-data", "app/assets/rob_run_preview.jpg;assets")
+          }
+          & pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS REDUX" @assets app/nameless_redux.py
       - name: Build launcher
         run: pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS Launcher" launcher.py
       - name: Package app and checksum
