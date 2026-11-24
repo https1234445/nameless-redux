@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.7.0-dev"
+VERSION = "2.8.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1744,6 +1744,10 @@ class ReduxWindow(QMainWindow):
             activate.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
             inner.addWidget(activate)
+            export = QPushButton("EXPORT LOOK  ↓")
+            export.clicked.connect(
+                lambda checked=False, n=name, p=palette: self.export_collection_pack(n, p))
+            inner.addWidget(export)
             grid.addWidget(card, i // 2, i % 2)
         layout.addLayout(grid)
         active = self.settings.value("collection/active", "")
@@ -1758,7 +1762,12 @@ class ReduxWindow(QMainWindow):
         disclaimer.setWordWrap(True)
         layout.addWidget(disclaimer)
         layout.addStretch()
-        self.add_page("Redux Collection", page)
+        scroll = QScrollArea()
+        scroll.setObjectName("oceanScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setWidget(page)
+        self.add_page("Redux Collection", scroll)
 
     def preview_collection_pack(self, palette, name):
         self.palette_combo.setCurrentText(palette)
@@ -1792,6 +1801,42 @@ class ReduxWindow(QMainWindow):
             self, "NAMELESS look activated",
             name + " is active in NAMELESS previews and saved locally.\n\n"
             "ROB RUN files, sky, weapons, bullets and sounds have NOT been modified.")
+
+    def export_collection_pack(self, name, palette):
+        """Export a portable NAMELESS-only preset with no game modifications."""
+        effects = {
+            "SAKURA DREAM": (12, 104, 115, 28),
+            "NEON NIGHT": (-8, 128, 145, -12),
+            "FROSTBITE": (6, 114, 82, -28),
+            "CRIMSON": (-5, 125, 130, 35),
+        }
+        if name not in effects:
+            return
+        suggested = name.lower().replace(" ", "-") + ".nameless.json"
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export NAMELESS look", suggested, "NAMELESS presets (*.json)")
+        if not filename:
+            return
+        values = effects[name]
+        payload = {
+            "format": "nameless-redux-look-v1",
+            "name": name,
+            "game": "ROB RUN",
+            "kind": "preview-only",
+            "palette": palette,
+            "intensity": 80,
+            "cool": name == "FROSTBITE",
+            "effects": dict(zip(
+                ("brightness", "contrast", "saturation", "warmth"), values)),
+            "game_files_modified": False,
+        }
+        try:
+            Path(filename).write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export failed", str(exc))
+            return
+        self.statusBar().showMessage("NAMELESS look exported: " + name, 5000)
 
     def add_page(self, name, page):
         self.pages[name] = page
