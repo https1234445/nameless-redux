@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.0.0-dev"
+VERSION = "3.1.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -561,12 +561,37 @@ class EffectsPreview(QWidget):
         self.base = image.convertToFormat(QImage.Format_RGB32).scaled(
             960, 540, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.real_screenshot = True
+        self._render_timer.stop()
         self._render_effects()
         return True
 
     def apply_effects(self, brightness=0, contrast=100, saturation=100, warmth=0):
         self._pending = (brightness, contrast, saturation, warmth)
         self._render_timer.start()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton and self.compare_enabled:
+            self._move_comparison(event.position().x())
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.LeftButton and self.compare_enabled:
+            self._move_comparison(event.position().x())
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def _move_comparison(self, x):
+        bounds = self.rect().adjusted(8, 8, -8, -8)
+        if self.base.isNull() or not bounds.width():
+            return
+        ratio = self.base.width() / self.base.height()
+        width = min(bounds.width(), bounds.height() * ratio)
+        left = bounds.center().x() - width / 2
+        self.compare_percent = max(0, min(100, round((x-left)*100/width)))
+        self.update()
 
     def flush_effects(self):
         if self._render_timer.isActive():
@@ -1494,8 +1519,12 @@ class ReduxWindow(QMainWindow):
         self.add_page("Settings", page)
 
     def load_initial_screenshot(self):
-        """Always show an automatic ROB RUN preview; cache it for offline use."""
+        """Use bundled image first, then cached official screenshot or Steam."""
         from PySide6.QtCore import QStandardPaths
+        bundled = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "assets" / "rob_run_preview.jpg"
+        if bundled.is_file() and self.effects_preview.set_screenshot(QImage(str(bundled))):
+            self.preview_source.setText("ROB RUN • built-in reference scene • preview only")
+            return
         cache_root = QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)
         self._official_preview_cache = Path(cache_root) / "rob_run_official_preview.png"
         if self._official_preview_cache.is_file():
@@ -2604,9 +2633,10 @@ class ReduxWindow(QMainWindow):
             }
             QProgressBar::chunk { background: #D99565; border-radius: 4px; }
             QStatusBar { background-color: #111215; color: #D5A27F; }
-            QScrollBar:vertical { background: transparent; width: 5px; margin: 3px 0; }
-            QScrollBar::handle:vertical { background: #6B6AA0; border-radius: 2px; min-height: 42px; }
-            QScrollBar::handle:vertical:hover { background: #C3AAFF; }
+            QScrollBar:vertical { background: #222743; width: 13px; margin: 0; border: 0; }
+            QScrollBar::handle:vertical { background: #F5F7FF; border-radius: 6px; min-height: 48px; margin: 1px 2px; }
+            QScrollBar::handle:vertical:hover { background: #FFFFFF; }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QToolTip {
                 background: #25262A; color: #FAF7F2;
