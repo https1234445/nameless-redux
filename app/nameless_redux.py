@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.3.0-dev"
+VERSION = "3.4.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1090,7 +1090,8 @@ class ReduxWindow(QMainWindow):
         self.top_game_status.setObjectName("status")
         header.addWidget(self.top_game_status)
         header.addSpacing(12)
-        launch_button = QPushButton("▶  LAUNCH GAME")
+        launch_button = GlowButton("▶  LAUNCH GAME")
+        self.top_launch_button = launch_button
         launch_button.setObjectName("primaryAction")
         launch_button.clicked.connect(self.launch_steam_game)
         header.addWidget(launch_button)
@@ -1702,6 +1703,10 @@ class ReduxWindow(QMainWindow):
             self.steam_status.setText("● ROB RUN NOT FOUND IN STEAM LIBRARIES")
             self.top_game_status.setText("● ROB RUN  /  NOT FOUND")
             self._last_game_running = False
+            self.top_launch_button.setProperty("gameRunning", False)
+            self.top_launch_button.setText("▶  LAUNCH GAME")
+            self.top_launch_button.style().unpolish(self.top_launch_button)
+            self.top_launch_button.style().polish(self.top_launch_button)
             return
         if not self.game_path_input.text():
             self.game_path_input.setText(str(folder))
@@ -1729,6 +1734,11 @@ class ReduxWindow(QMainWindow):
             self.statusBar().showMessage(
                 "ROB RUN detected • Your NAMELESS workspace is ready", 5000)
         self._last_game_running = running
+        if self.top_launch_button.property("gameRunning") != running:
+            self.top_launch_button.setProperty("gameRunning", running)
+            self.top_launch_button.setText("●  GAME RUNNING" if running else "▶  LAUNCH GAME")
+            self.top_launch_button.style().unpolish(self.top_launch_button)
+            self.top_launch_button.style().polish(self.top_launch_button)
         self.steam_status.setText(
             ("● ROB RUN RUNNING" if running else "● ROB RUN INSTALLED")
             + "  •  " + str(folder))
@@ -1939,7 +1949,13 @@ class ReduxWindow(QMainWindow):
         layout.setSpacing(18)
         layout.addLayout(self.heading(
             "REDUX COLLECTION",
-            "Ready-made aesthetic concepts. Choose one to preview its visual palette."))
+            "Curated concepts • optimized assets and measured FPS are required before game installation."))
+        performance_note = QLabel(
+            "PERFORMANCE FIRST  /  Future game packs must offer FPS-friendly assets, "
+            "reduced particle load, and tested compatibility. No FPS boost is claimed yet.")
+        performance_note.setObjectName("muted")
+        performance_note.setWordWrap(True)
+        layout.addWidget(performance_note)
         grid = QGridLayout()
         grid.setSpacing(14)
         packs = [
@@ -2651,13 +2667,21 @@ class ReduxWindow(QMainWindow):
                 font-family: 'Segoe UI'; font-size: 12px;
             }
             QWidget#contentSurface { background: transparent; }
-            QFrame#sidebar { background: #161A34; border-right: 1px solid #394276; }
+            QFrame#sidebar {
+                background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+                    stop:0 #1F2448,stop:.55 #201B45,stop:1 #10243B);
+                border-right: 2px solid #7974D0;
+            }
             QLabel { background: transparent; color: #F1F0EC; }
             QLabel#navSection {
                 color: #77777D; font-size: 9px; font-weight: 700;
                 letter-spacing: 2px; padding-left: 12px;
             }
-            QFrame#headerRule { background: #303136; border: none; }
+            QFrame#headerRule {
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
+                    stop:0 #6B9FFF,stop:.55 #D78DFF,stop:1 #60E3E9);
+                border: none;
+            }
             QWidget#visualCanvas {
                 background-color: #101114; border: 1px solid #3B3B40;
                 border-radius: 12px;
@@ -2670,11 +2694,19 @@ class ReduxWindow(QMainWindow):
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #C3ADFF,stop:1 #A0ECFF);
                 border-color: #FFFFFF;
             }
+            QPushButton#primaryAction[gameRunning="true"] {
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #2DDC96,stop:1 #7BF4B0);
+                color: #082E22; border: 2px solid #A9FFD5;
+            }
+            QPushButton#primaryAction[gameRunning="true"]:hover {
+                background: #A2FFD2; border-color: #FFFFFF;
+            }
+            QLabel#status { color: #9CA9E9; font-size: 11px; font-weight: 800; }
             QLabel#brand { color: #FAF8F3; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
             QLabel#subbrand { color: #E99C62; font-size: 9px; letter-spacing: 1px; }
             QLabel#version { color: #77777A; font-size: 10px; }
             QLabel#pageTitle { color: #F8F7F4; font-size: 29px; font-weight: 700; }
-            QLabel#status { color: #E8A06C; font-size: 11px; font-weight: 600; }
+
             QLabel#sectionTitle { color: #F4F2EF; font-size: 21px; font-weight: 700; }
             QLabel#cardTitle { color: #D6D2CD; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
             QLabel#previewSource {
