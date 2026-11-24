@@ -16,6 +16,13 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --upgrade pyinstaller PySide6 numpy
+      - name: Validate source syntax
+        run: python -m py_compile app/nameless_redux.py launcher.py
+      - name: Headless UI smoke test
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python tests/smoke_ui.py
       - name: Build app
         run: pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS REDUX" app/nameless_redux.py
       - name: Build launcher
