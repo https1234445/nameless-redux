@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.6.2-dev"
+VERSION = "3.6.3-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -2704,6 +2704,11 @@ class ReduxWindow(QMainWindow):
             self.apply_crosshair_data({})
             self.update_swatch()
             self.update_stats()
+            self.collection_active.setText("ACTIVE NAMELESS LOOK  /  NONE SELECTED")
+            # Reset must not retain a previously selected custom image.
+            self._preview_request_id = getattr(self, "_preview_request_id", 0) + 1
+            self.load_initial_screenshot()
+            self.settings.sync()
             self.statusBar().showMessage("Preferences reset.", 3000)
 
     def apply_style(self):
