@@ -56,6 +56,12 @@ for widget_type in (ShimmerText, AuroraCard, ReduxCover):
     for widget in window.findChildren(widget_type):
         timer = widget._motion if isinstance(widget, ReduxCover) else widget._clock
         assert timer.isActive(), widget_type.__name__
+# Sakura's game install must remain visibly disabled until mod support is verified.
+from PySide6.QtWidgets import QPushButton
+install_buttons = [b for b in window.findChildren(QPushButton)
+                   if b.text().startswith("INSTALL INTO ROB RUN")]
+assert len(install_buttons) == 1
+assert not install_buttons[0].isEnabled()
 # A collection selection changes local preview only, without a game patch.
 from PySide6.QtWidgets import QMessageBox
 original_info = QMessageBox.information
