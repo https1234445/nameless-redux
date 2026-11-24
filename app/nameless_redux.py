@@ -2174,12 +2174,13 @@ class ReduxWindow(QMainWindow):
                 widget._clock.stop()
         # Performance option applies to every animated UI element, not just
         # the hero. Inactive pages must not keep repainting in the background.
-        for widget in self.findChildren((ShimmerText, AuroraCard, ReduxCover)):
-            clock = widget._motion if isinstance(widget, ReduxCover) else widget._clock
-            if enabled:
-                clock.start()
-            else:
-                clock.stop()
+        for widget_type in (ShimmerText, AuroraCard, ReduxCover):
+            for widget in self.findChildren(widget_type):
+                clock = widget._motion if isinstance(widget, ReduxCover) else widget._clock
+                if enabled:
+                    clock.start()
+                else:
+                    clock.stop()
         self.settings.setValue("theme/motion", enabled)
         self.settings.setValue("theme/speed", speed)
 
