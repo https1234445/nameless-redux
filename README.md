@@ -27,6 +27,12 @@ Users should be able to browse complete themed collections **or individual categ
 
 **Sakura Dream** is one example, not the definition of a REDUX. The same structure should accommodate many visual styles and independent item packs.
 
+## Performance-first REDUX design
+
+The priority is **high and stable FPS**, not maximal visual complexity. Future game-compatible REDUX packs should provide a performance profile with bounded texture resolution and memory usage, efficient materials, restrained particle counts, and no unnecessary background processing. The NAMELESS UI animations must not run inside the game process.
+
+An FPS increase **cannot be guaranteed**: changing cosmetics may have no effect or may reduce performance, depending on the engine, GPU, game settings and the asset. Claims of improved FPS require controlled before/after measurements on the same scene and hardware, including average FPS and 1% lows. Until supported modding and benchmarking exist, the gallery makes no performance improvement claims.
+
 ### Important limitations
 
 **NAMELESS does not currently install game modifications.** Pink skies, sakura weapon textures, flower bullet particles, and replacement sounds are planned **game-content packs**, not implemented features. The current presets affect only NAMELESS previews. A real one-click installer requires legally distributable assets, a verified compatible game modification mechanism, safe backups, and restore/uninstall support. No files in ROB RUN are modified by these presets.
