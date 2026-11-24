@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.6.1-dev"
+VERSION = "3.6.2-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1620,8 +1620,15 @@ class ReduxWindow(QMainWindow):
         self.add_page("Settings", page)
 
     def load_initial_screenshot(self):
-        """Use bundled image first, then cached official screenshot or Steam."""
+        """Restore the user's screenshot first, then bundled/cache/Steam sources."""
         from PySide6.QtCore import QStandardPaths
+        # Invalidate any in-flight Steam replies before choosing a local image.
+        self._preview_request_id = getattr(self, "_preview_request_id", 0) + 1
+        saved = str(self.settings.value("preview/screenshot", "") or "")
+        if saved and Path(saved).is_file():
+            if self.effects_preview.set_screenshot(QImage(saved)):
+                self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(saved).name)
+                return
         bundled = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "assets" / "rob_run_preview.jpg"
         executable_dir = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
         candidates = (bundled, executable_dir / "rob_run_preview.jpg", executable_dir / "images.jpg")
@@ -1631,13 +1638,6 @@ class ReduxWindow(QMainWindow):
                 return
         cache_root = QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)
         self._official_preview_cache = Path(cache_root) / "rob_run_official_preview.png"
-        # Restore a previously chosen image before any asynchronous Steam fetch.
-        # The user can always switch back to the official image later.
-        saved = str(self.settings.value("preview/screenshot", "") or "")
-        if saved and Path(saved).is_file():
-            if self.effects_preview.set_screenshot(QImage(saved)):
-                self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(saved).name)
-                return
         if self._official_preview_cache.is_file():
             if self.effects_preview.set_screenshot(QImage(str(self._official_preview_cache))):
                 self.preview_source.setText("ROB RUN • official Steam preview (cached)")
