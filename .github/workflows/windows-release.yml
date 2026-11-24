@@ -44,8 +44,33 @@ jobs:
           Compress-Archive -Path "dist/NAMELESS REDUX.exe" -DestinationPath "nameless-redux-app.zip"
           $hash = (Get-FileHash "nameless-redux-app.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  nameless-redux-app.zip" | Set-Content -Encoding ascii "nameless-redux-app.zip.sha256"
+      - name: Verify packaged Windows release
+        shell: pwsh
+        run: |
+          $app = "dist/NAMELESS REDUX.exe"
+          $launcher = "dist/NAMELESS Launcher.exe"
+          $archive = "nameless-redux-app.zip"
+          $checksum = "nameless-redux-app.zip.sha256"
+          foreach ($file in @($app, $launcher, $archive, $checksum)) {
+            if (!(Test-Path $file) -or (Get-Item $file).Length -eq 0) {
+              throw "Missing or empty release artifact: $file"
+            }
+          }
+          Add-Type -AssemblyName System.IO.Compression
+          $zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $archive))
+          try {
+            if (-not ($zip.Entries | Where-Object { $_.Name -eq "NAMELESS REDUX.exe" })) {
+              throw "Application executable missing from ZIP"
+            }
+          } finally {
+            $zip.Dispose()
+          }
+          $actual = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = (Get-Content $checksum -Raw).Trim().Split(' ')[0]
+          if ($actual -ne $expected) { throw "ZIP SHA256 checksum mismatch" }
       - uses: actions/upload-artifact@v4
         with:
+          retention-days: 14
           name: nameless-redux-windows
           path: |
             dist/NAMELESS Launcher.exe
