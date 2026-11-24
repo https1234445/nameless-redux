@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
     QListWidgetItem, QSlider, QComboBox, QCheckBox, QFileDialog, QMessageBox,
-    QLineEdit, QInputDialog, QProgressBar, QScrollArea, QGraphicsOpacityEffect
+    QLineEdit, QInputDialog, QProgressBar, QScrollArea, QGraphicsOpacityEffect, QColorDialog
 )
 
 try:
@@ -187,7 +187,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "1.6.0"
+VERSION = "2.0.0"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -195,6 +195,10 @@ PRESETS = {
     "Midnight Teal": "#145b68",
     "Abyss": "#173b55",
     "Sea Glass": "#65bdb2",
+    "Aurora": "#61a9fa", "Neon Reef": "#00e4cf", "Pearl": "#b4d7e5",
+    "Storm": "#576b9b", "Coral": "#ee8e99", "Deep Violet": "#7962cc",
+    "Ice Mint": "#9df7d7", "Sapphire": "#315bc0", "Sunset": "#f2a873",
+    "Graphite": "#526477", "Glacier": "#70d7f6", "Emerald": "#1ab68e",
 }
 VISUAL_PACKS = {
     "Deep Ocean": {"palette": "Ocean Deep", "intensity": 82, "cool": True},
@@ -202,7 +206,30 @@ VISUAL_PACKS = {
     "Frozen Night": {"palette": "Arctic Blue", "intensity": 73, "cool": True},
     "Abyss Minimal": {"palette": "Abyss", "intensity": 45, "cool": True},
     "Sea Glass Soft": {"palette": "Sea Glass", "intensity": 58, "cool": False},
+    "Aurora Drift": {"palette": "Aurora", "intensity": 78, "cool": True},
+    "Neon Current": {"palette": "Neon Reef", "intensity": 96, "cool": True},
+    "Pearl Haze": {"palette": "Pearl", "intensity": 42, "cool": True},
+    "Storm Signal": {"palette": "Storm", "intensity": 75, "cool": True},
+    "Coral Bloom": {"palette": "Coral", "intensity": 84, "cool": False},
+    "Violet Depth": {"palette": "Deep Violet", "intensity": 81, "cool": True},
+    "Mint Horizon": {"palette": "Ice Mint", "intensity": 63, "cool": False},
+    "Sapphire Pulse": {"palette": "Sapphire", "intensity": 91, "cool": True},
+    "Golden Tide": {"palette": "Sunset", "intensity": 72, "cool": False},
+    "Graphite Zero": {"palette": "Graphite", "intensity": 32, "cool": True},
 }
+EFFECT_PRESETS = {
+    "Neutral": {"brightness": 0, "contrast": 100, "saturation": 100, "warmth": 0},
+    "Cinematic Deep": {"brightness": -12, "contrast": 138, "saturation": 84, "warmth": -18},
+    "Vivid Ocean": {"brightness": 8, "contrast": 125, "saturation": 160, "warmth": -35},
+    "Soft Film": {"brightness": 12, "contrast": 85, "saturation": 80, "warmth": 16},
+    "Arctic Night": {"brightness": -8, "contrast": 132, "saturation": 106, "warmth": -70},
+    "Golden Hour": {"brightness": 13, "contrast": 109, "saturation": 120, "warmth": 65},
+    "Noir": {"brightness": -10, "contrast": 154, "saturation": 0, "warmth": 0},
+    "Dreamscape": {"brightness": 18, "contrast": 76, "saturation": 138, "warmth": 10},
+    "Cold Steel": {"brightness": -5, "contrast": 142, "saturation": 67, "warmth": -44},
+    "Pastel Haze": {"brightness": 17, "contrast": 78, "saturation": 69, "warmth": 22},
+}
+
 CROSSHAIR_COLORS = {
     "Ocean Cyan": "#55e6e0",
     "White": "#f2fbff",
@@ -412,6 +439,8 @@ class EffectsPreview(QWidget):
         self.base = self.make_scene()
         self.filtered = self.base.copy()
         self._pending = (0, 100, 100, 0)
+        self.compare_percent = 50
+        self.compare_enabled = True
         self._render_timer = QTimer(self)
         self._render_timer.setSingleShot(True)
         self._render_timer.setInterval(35)
@@ -536,6 +565,18 @@ class EffectsPreview(QWidget):
         height = width / ratio
         target = QRectF(bounds.center().x()-width/2, bounds.center().y()-height/2, width, height)
         p.drawImage(target, self.filtered)
+        if self.compare_enabled:
+            from PySide6.QtCore import QRectF
+            split = target.left() + target.width() * self.compare_percent / 100.0
+            p.save()
+            p.setClipRect(QRectF(target.left(), target.top(), max(0, split-target.left()), target.height()))
+            p.drawImage(target, self.base)
+            p.restore()
+            p.setPen(QPen(QColor('#e5ffff'), 2))
+            p.drawLine(int(split), int(target.top()), int(split), int(target.bottom()))
+            p.setPen(QColor('#f4ffff'))
+            p.drawText(int(target.left()+12), int(target.top()+24), 'BEFORE')
+            p.drawText(int(target.right()-64), int(target.top()+24), 'AFTER')
         p.end()
 
 class CrosshairPreview(QWidget):
@@ -600,6 +641,8 @@ class AmbientSurface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._phase = 0.0
+        self.gradient_start = QColor('#11707e')
+        self.gradient_end = QColor('#0f5386')
         self._clock = QTimer(self)
         self._clock.setInterval(50)
         self._clock.timeout.connect(self._tick)
@@ -618,8 +661,8 @@ class AmbientSurface(QWidget):
         painter.fillRect(self.rect(), QColor('#08131d'))
         w, h = max(1, self.width()), max(1, self.height())
         for cx, cy, radius, color in [
-            (0.87 + 0.045 * math.sin(self._phase), 0.10 + 0.035 * math.cos(self._phase), 0.75, QColor(17, 112, 126, 57)),
-            (0.12 + 0.035 * math.cos(self._phase * 0.7), 0.93 + 0.04 * math.sin(self._phase), 0.68, QColor(15, 83, 134, 44)),
+            (0.87 + 0.045 * math.sin(self._phase), 0.10 + 0.035 * math.cos(self._phase), 0.75, QColor(self.gradient_start.red(), self.gradient_start.green(), self.gradient_start.blue(), 57)),
+            (0.12 + 0.035 * math.cos(self._phase * 0.7), 0.93 + 0.04 * math.sin(self._phase), 0.68, QColor(self.gradient_end.red(), self.gradient_end.green(), self.gradient_end.blue(), 44)),
         ]:
             r = max(w, h) * radius
             gradient = QRadialGradient(w * cx, h * cy, r)
@@ -636,6 +679,8 @@ class GradientHero(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._offset = 0.0
+        self.gradient_start = QColor('#123d4b')
+        self.gradient_end = QColor('#0a2030')
         self._clock = QTimer(self)
         self._clock.setInterval(65)
         self._clock.timeout.connect(self._tick)
@@ -653,9 +698,9 @@ class GradientHero(QFrame):
         rect = self.rect().adjusted(1, 1, -1, -1)
         gradient = QLinearGradient(0, 0, self.width(), self.height())
         middle = 0.48 + 0.11 * math.sin(self._offset)
-        gradient.setColorAt(0.0, QColor('#123d4b'))
+        gradient.setColorAt(0.0, self.gradient_start)
         gradient.setColorAt(middle, QColor('#102b42'))
-        gradient.setColorAt(1.0, QColor('#0a2030'))
+        gradient.setColorAt(1.0, self.gradient_end)
         painter.setBrush(gradient)
         painter.setPen(QPen(QColor('#286779'), 1))
         painter.drawRoundedRect(rect, 20, 20)
@@ -673,6 +718,7 @@ class ReduxWindow(QMainWindow):
         self.audio_files = [str(p) for p in self.audio_files if isinstance(p, str) and Path(p).is_file()]
         self.profiles = self.read_json_setting("profiles", {})
         self.custom_visual_packs = self.read_json_setting("visual/packs", {})
+        self.theme_colors = self.read_json_setting("theme/colors", {"start": "#11707e", "end": "#0f5386"})
         self.player = None
         self.audio_output = None
         if MULTIMEDIA_AVAILABLE:
@@ -708,6 +754,7 @@ class ReduxWindow(QMainWindow):
         nav_items = [
             ("Overview", "◈"),
             ("Visuals Studio", "◉"),
+            ("Theme Lab", "✦"),
             ("Sound Library", "♫"),
             ("Crosshair Studio", "⌖"),
             ("Profiles", "▤"),
@@ -749,6 +796,7 @@ class ReduxWindow(QMainWindow):
         main.addWidget(content, 1)
 
         self.build_pages()
+        self.apply_theme_colors()
         self.apply_style()
         self.load_settings()
         self.restore_audio_list()
@@ -787,6 +835,7 @@ class ReduxWindow(QMainWindow):
         l = QVBoxLayout(page)
         l.setSpacing(16)
         hero = GradientHero()
+        self.hero = hero
         hero.setObjectName("heroCard")
         hero.setMinimumHeight(188)
         hl = QVBoxLayout(hero)
@@ -795,10 +844,10 @@ class ReduxWindow(QMainWindow):
         tag = QLabel("N A M E L E S S   /   O C E A N   E D I T I O N")
         tag.setObjectName("accent")
         hl.addWidget(tag)
-        headline = QLabel("DESIGN YOUR OWN ATMOSPHERE.")
+        headline = QLabel("OCEAN REBORN  /  2.0")
         headline.setObjectName("heroHeadline")
         hl.addWidget(headline)
-        desc = QLabel("Shape your visuals  /  Build your packs  /  Own your setup")
+        desc = QLabel("Gradient themes  /  Cinematic previews  /  Personal profiles")
         desc.setObjectName("heroDescription")
         hl.addWidget(desc)
         l.addWidget(hero)
@@ -886,6 +935,21 @@ class ReduxWindow(QMainWindow):
             "VISUAL EFFECTS ENGINE", "Live preview on a generated test scene. Does not change ROB RUN.")
         self.effects_preview = EffectsPreview()
         effects_layout.addWidget(self.effects_preview)
+        compare_row = QHBoxLayout()
+        self.compare_check = OceanToggle("Before / after comparison")
+        self.compare_check.setChecked(True)
+        self.compare_check.stateChanged.connect(self.toggle_compare)
+        compare_row.addWidget(self.compare_check)
+        effects_layout.addLayout(compare_row)
+        self.compare_slider = self.add_slider(effects_layout, "BEFORE / AFTER SPLIT", 0, 100, 50)
+        self.compare_slider.valueChanged.connect(self.update_compare)
+        self.effect_preset = QComboBox()
+        self.effect_preset.addItems(EFFECT_PRESETS.keys())
+        effects_layout.addWidget(QLabel("CINEMATIC EFFECT PRESET"))
+        effects_layout.addWidget(self.effect_preset)
+        preset_btn = QPushButton("APPLY EFFECT PRESET")
+        preset_btn.clicked.connect(self.apply_effect_preset)
+        effects_layout.addWidget(preset_btn)
         self.effect_sliders = {}
         for key, label, low, high, initial in [
             ("brightness", "BRIGHTNESS", -50, 50, 0),
@@ -921,6 +985,46 @@ class ReduxWindow(QMainWindow):
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setWidget(page)
         self.add_page("Visuals Studio", scroll)
+
+        # Theme Lab: user-defined gradient and animation preferences.
+        page = QWidget()
+        l = QVBoxLayout(page)
+        l.setSpacing(16)
+        l.addLayout(self.heading("THEME LAB", "Build your own animated gradient. Settings remain local."))
+        c, cl = self.card("GRADIENT DESIGNER", "Choose two colors for the ambient background and hero panel.")
+        self.theme_preview = GradientHero()
+        self.theme_preview.setMinimumHeight(125)
+        cl.addWidget(self.theme_preview)
+        color_row = QHBoxLayout()
+        start_btn = QPushButton("START COLOR")
+        start_btn.clicked.connect(lambda: self.pick_theme_color("start"))
+        end_btn = QPushButton("END COLOR")
+        end_btn.clicked.connect(lambda: self.pick_theme_color("end"))
+        color_row.addWidget(start_btn)
+        color_row.addWidget(end_btn)
+        cl.addLayout(color_row)
+        self.motion_check = OceanToggle("Enable ambient animations")
+        self.motion_check.setChecked(True)
+        self.motion_check.stateChanged.connect(self.update_motion)
+        cl.addWidget(self.motion_check)
+        self.motion_speed = self.add_slider(cl, "MOTION SPEED", 1, 5, 2)
+        self.motion_speed.valueChanged.connect(self.update_motion)
+        actions = QHBoxLayout()
+        for title, handler in [("SAVE THEME", self.save_theme),
+                               ("EXPORT THEME", self.export_theme),
+                               ("IMPORT THEME", self.import_theme),
+                               ("RESET THEME", self.reset_theme)]:
+            btn = QPushButton(title)
+            btn.clicked.connect(handler)
+            actions.addWidget(btn)
+        cl.addLayout(actions)
+        l.addWidget(c)
+        hint = QLabel("Motion settings also affect the main background. Disable animations for lower CPU use.")
+        hint.setObjectName("muted")
+        hint.setWordWrap(True)
+        l.addWidget(hint)
+        l.addStretch()
+        self.add_page("Theme Lab", page)
 
         # Sound
         page = QWidget()
@@ -1143,8 +1247,8 @@ class ReduxWindow(QMainWindow):
         l = QVBoxLayout(page)
         l.addLayout(self.heading("SETTINGS", "Application information and local preferences."))
         c, cl = self.card("ABOUT NAMELESS REDUX", "A standalone creative workspace with local previews.")
-        for line in [f"Version: {VERSION}", "Edition: Ocean Studio", "Mode: Local preview",
-                     "Game integration: Read-only inspector, backup + pack staging", "Settings storage: This PC"]:
+        for line in [f"Version: {VERSION}", "Edition: Ocean Reborn 2.0", "Mode: Local preview",
+                     "Game integration: Read-only inspector, backup + pack staging", "Settings storage: This PC", "Theme Lab: animated custom gradients"]:
             lab = QLabel(line)
             lab.setObjectName("muted")
             cl.addWidget(lab)
@@ -1387,7 +1491,7 @@ class ReduxWindow(QMainWindow):
                     target.widget().update()
             self.stack.update()
         self.page_title.setText(name)
-        for key in ["overview", "visuals_studio", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
+        for key in ["overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
             btn = getattr(self, "nav_" + key)
             btn.setChecked(btn.text().endswith(name))
         if name == "Overview":
@@ -1410,6 +1514,107 @@ class ReduxWindow(QMainWindow):
         self.visual_swatch.setStyleSheet(
             f"QFrame#swatch {{ background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #071923, stop:1 {color.name()}); border: 1px solid #286071; border-radius: 12px; }}"
         )
+
+    def update_compare(self, value=None):
+        self.effects_preview.compare_percent = self.compare_slider.value()
+        self.effects_preview.update()
+
+    def toggle_compare(self, *args):
+        self.effects_preview.compare_enabled = self.compare_check.isChecked()
+        self.compare_slider.setEnabled(self.compare_check.isChecked())
+        self.effects_preview.update()
+
+    def apply_theme_colors(self):
+        start = QColor(self.theme_colors.get("start", "#11707e"))
+        end = QColor(self.theme_colors.get("end", "#0f5386"))
+        if not start.isValid() or not end.isValid():
+            return
+        for w in (self.hero, self.theme_preview):
+            w.gradient_start = start
+            w.gradient_end = end
+            w.update()
+        self.centralWidget().findChild(AmbientSurface).gradient_start = start
+        self.centralWidget().findChild(AmbientSurface).gradient_end = end
+        self.centralWidget().findChild(AmbientSurface).update()
+
+    def pick_theme_color(self, key):
+        current = QColor(self.theme_colors.get(key, "#11707e"))
+        chosen = QColorDialog.getColor(current, self, "Choose gradient color")
+        if chosen.isValid():
+            self.theme_colors[key] = chosen.name()
+            self.apply_theme_colors()
+
+    def update_motion(self, *args):
+        enabled = self.motion_check.isChecked()
+        speed = self.motion_speed.value()
+        interval = {1: 120, 2: 65, 3: 45, 4: 32, 5: 24}[speed]
+        ambient = self.centralWidget().findChild(AmbientSurface)
+        for widget in (ambient, self.hero, self.theme_preview):
+            widget._clock.setInterval(interval)
+            if enabled:
+                widget._clock.start()
+            else:
+                widget._clock.stop()
+        self.settings.setValue("theme/motion", enabled)
+        self.settings.setValue("theme/speed", speed)
+
+    def save_theme(self):
+        self.settings.setValue("theme/colors", json.dumps(self.theme_colors))
+        self.settings.setValue("theme/motion", self.motion_check.isChecked())
+        self.settings.setValue("theme/speed", self.motion_speed.value())
+        self.statusBar().showMessage("Gradient theme saved.", 3000)
+
+    def export_theme(self):
+        path, _ = QFileDialog.getSaveFileName(self, "Export theme", "nameless_theme.json", "JSON (*.json)")
+        if not path:
+            return
+        data = {"format": "nameless-theme-v1", "colors": self.theme_colors,
+                "motion": self.motion_check.isChecked(), "speed": self.motion_speed.value()}
+        try:
+            Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export failed", str(exc))
+
+    def import_theme(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Import theme", "", "JSON (*.json)")
+        if not path:
+            return
+        try:
+            if Path(path).stat().st_size > 64 * 1024:
+                raise ValueError("Theme file exceeds 64 KiB.")
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            if not isinstance(data, dict) or data.get("format") != "nameless-theme-v1":
+                raise ValueError("Unsupported theme format.")
+            colors = data.get("colors")
+            if not isinstance(colors, dict) or any(not isinstance(colors.get(k), str) or
+                not __import__('re').fullmatch(r'#[0-9a-fA-F]{6}', colors[k]) for k in ("start", "end")):
+                raise ValueError("Invalid theme colors.")
+            speed = data.get("speed", 2)
+            if type(speed) is not int or not 1 <= speed <= 5 or type(data.get("motion")) is not bool:
+                raise ValueError("Invalid animation settings.")
+            self.theme_colors = {k: colors[k] for k in ("start", "end")}
+            self.motion_check.setChecked(data["motion"])
+            self.motion_speed.setValue(speed)
+            self.apply_theme_colors()
+            self.save_theme()
+        except (OSError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
+            QMessageBox.warning(self, "Import failed", str(exc))
+
+    def reset_theme(self):
+        self.theme_colors = {"start": "#11707e", "end": "#0f5386"}
+        self.motion_check.setChecked(True)
+        self.motion_speed.setValue(2)
+        self.apply_theme_colors()
+        self.save_theme()
+
+    def apply_effect_preset(self):
+        name = self.effect_preset.currentText()
+        values = EFFECT_PRESETS.get(name)
+        if values:
+            for key, value in values.items():
+                self.effect_sliders[key].setValue(value)
+            self.effects_timer.stop()
+            self.update_effects_preview()
 
     def update_effects_preview(self):
         values = {key: slider.value() for key, slider in self.effect_sliders.items()}
@@ -1715,6 +1920,8 @@ class ReduxWindow(QMainWindow):
                 "cool": self.cool_check.isChecked(),
             },
             "crosshair": self.crosshair_data(),
+            "effects": {key: slider.value() for key, slider in self.effect_sliders.items()},
+            "theme": dict(self.theme_colors),
         }
         self.settings.setValue("profiles", json.dumps(self.profiles, ensure_ascii=False))
         self.refresh_profiles()
@@ -1731,6 +1938,19 @@ class ReduxWindow(QMainWindow):
         self.intensity_slider.setValue(int(visual.get("intensity", 65)))
         self.cool_check.setChecked(bool(visual.get("cool", True)))
         self.apply_crosshair_data(data.get("crosshair", {}))
+        effects = data.get("effects", {})
+        if isinstance(effects, dict):
+            for key, slider in self.effect_sliders.items():
+                try:
+                    val = int(effects.get(key, slider.value()))
+                    slider.setValue(max(slider.minimum(), min(slider.maximum(), val)))
+                except (ValueError, TypeError):
+                    pass
+        theme = data.get("theme", {})
+        if isinstance(theme, dict) and all(isinstance(theme.get(k), str) and
+            __import__('re').fullmatch(r'#[0-9a-fA-F]{6}', theme[k]) for k in ("start", "end")):
+            self.theme_colors = {k: theme[k] for k in ("start", "end")}
+            self.apply_theme_colors()
         self.update_swatch()
         self.statusBar().showMessage(f"Profile '{item.text()}' loaded.", 3000)
 
@@ -1764,6 +1984,13 @@ class ReduxWindow(QMainWindow):
 
     def load_settings(self):
         self.game_path_input.setText(str(self.settings.value("game/folder", "")))
+        self.motion_check.setChecked(self.settings.value("theme/motion", True, type=bool))
+        try:
+            speed = int(self.settings.value("theme/speed", 2))
+        except (TypeError, ValueError):
+            speed = 2
+        self.motion_speed.setValue(max(1, min(5, speed)))
+        self.update_motion()
         self.palette_combo.setCurrentText(self.settings.value("visual/palette", "Ocean Deep"))
         self.intensity_slider.setValue(int(self.settings.value("visual/intensity", 65)))
         self.cool_check.setChecked(self.settings.value("visual/cool", True, type=bool))
@@ -1798,6 +2025,7 @@ class ReduxWindow(QMainWindow):
             self.restore_audio_list()
             self.profiles = {}
             self.custom_visual_packs = {}
+            self.reset_theme()
             self.refresh_visual_packs()
             self.refresh_profiles()
             self.palette_combo.setCurrentText("Ocean Deep")
