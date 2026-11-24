@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.4.0-dev"
+VERSION = "3.5.0-rc1"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1671,7 +1671,7 @@ class ReduxWindow(QMainWindow):
             picture_reply.finished.connect(lambda r=picture_reply: self._steam_image_ready(r))
         except (ValueError, KeyError, IndexError, TypeError, UnicodeError) as exc:
             self.preview_source.setText(
-                "Official Steam image unavailable. Choose a real in-game screenshot (F12). " + str(exc))
+                "Official ROB RUN preview temporarily unavailable • " + str(exc))
         finally:
             reply.deleteLater()
 
@@ -2172,6 +2172,14 @@ class ReduxWindow(QMainWindow):
                 widget._clock.start()
             else:
                 widget._clock.stop()
+        # Performance option applies to every animated UI element, not just
+        # the hero. Inactive pages must not keep repainting in the background.
+        for widget in self.findChildren((ShimmerText, AuroraCard, ReduxCover)):
+            clock = widget._motion if isinstance(widget, ReduxCover) else widget._clock
+            if enabled:
+                clock.start()
+            else:
+                clock.stop()
         self.settings.setValue("theme/motion", enabled)
         self.settings.setValue("theme/speed", speed)
 
@@ -2626,10 +2634,6 @@ class ReduxWindow(QMainWindow):
             slider.setValue(max(slider.minimum(), min(slider.maximum(), saved)))
         self.effects_timer.stop()
         self.update_effects_preview()
-        saved_screenshot = self.settings.value("preview/screenshot", "")
-        if saved_screenshot and Path(saved_screenshot).is_file():
-            if self.effects_preview.set_screenshot(QImage(saved_screenshot)):
-                self.preview_source.setText("REAL GAME SCREENSHOT • " + Path(saved_screenshot).name)
 
     def reset_settings(self):
         answer = QMessageBox.question(self, "Reset preferences", "Reset saved visual, crosshair and profile settings?")
