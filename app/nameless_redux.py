@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.6.0-dev"
+VERSION = "3.6.1-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1631,6 +1631,13 @@ class ReduxWindow(QMainWindow):
                 return
         cache_root = QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)
         self._official_preview_cache = Path(cache_root) / "rob_run_official_preview.png"
+        # Restore a previously chosen image before any asynchronous Steam fetch.
+        # The user can always switch back to the official image later.
+        saved = str(self.settings.value("preview/screenshot", "") or "")
+        if saved and Path(saved).is_file():
+            if self.effects_preview.set_screenshot(QImage(saved)):
+                self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(saved).name)
+                return
         if self._official_preview_cache.is_file():
             if self.effects_preview.set_screenshot(QImage(str(self._official_preview_cache))):
                 self.preview_source.setText("ROB RUN • official Steam preview (cached)")
@@ -1644,18 +1651,24 @@ class ReduxWindow(QMainWindow):
         if filename:
             image = QImage(filename)
             if self.effects_preview.set_screenshot(image):
+                self._preview_request_id = getattr(self, "_preview_request_id", 0) + 1
                 self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(filename).name)
                 self.settings.setValue("preview/screenshot", filename)
             else:
                 QMessageBox.warning(self, "Image error", "Could not open the screenshot.")
 
     def load_official_screenshot(self):
+        # Ignore stale requests if the user selects their own screenshot.
+        self._preview_request_id = getattr(self, "_preview_request_id", 0) + 1
+        request_id = self._preview_request_id
         url = QUrl("https://store.steampowered.com/api/appdetails?appids=4262460&l=english")
         reply = self.network.get(QNetworkRequest(url))
-        reply.finished.connect(lambda r=reply: self._steam_metadata_ready(r))
+        reply.finished.connect(lambda r=reply, n=request_id: self._steam_metadata_ready(r, n))
 
-    def _steam_metadata_ready(self, reply):
+    def _steam_metadata_ready(self, reply, request_id):
         try:
+            if request_id != self._preview_request_id:
+                return
             if reply.error():
                 raise ValueError(reply.errorString())
             payload = json.loads(bytes(reply.readAll()).decode("utf-8"))
@@ -1668,15 +1681,17 @@ class ReduxWindow(QMainWindow):
             ):
                 raise ValueError("Unexpected screenshot host")
             picture_reply = self.network.get(QNetworkRequest(url))
-            picture_reply.finished.connect(lambda r=picture_reply: self._steam_image_ready(r))
+            picture_reply.finished.connect(lambda r=picture_reply, n=request_id: self._steam_image_ready(r, n))
         except (ValueError, KeyError, IndexError, TypeError, UnicodeError) as exc:
             self.preview_source.setText(
                 "Official ROB RUN preview temporarily unavailable • " + str(exc))
         finally:
             reply.deleteLater()
 
-    def _steam_image_ready(self, reply):
+    def _steam_image_ready(self, reply, request_id):
         try:
+            if request_id != self._preview_request_id:
+                return
             if reply.error():
                 raise ValueError(reply.errorString())
             data = bytes(reply.readAll())
