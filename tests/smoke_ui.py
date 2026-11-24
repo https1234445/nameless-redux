@@ -39,6 +39,29 @@ for key, value in (("brightness", 30), ("contrast", 145),
 window.effects_preview._move_comparison(window.effects_preview.width() * .75)
 assert 0 <= window.effects_preview.compare_percent <= 100
 assert window.pages["Redux Collection"].verticalScrollBar().value() == 0
+# Every animated component obeys the performance / motion setting.
+from nameless_redux import ShimmerText, AuroraCard, ReduxCover
+window.motion_check.setChecked(False)
+for widget_type in (ShimmerText, AuroraCard, ReduxCover):
+    for widget in window.findChildren(widget_type):
+        timer = widget._motion if isinstance(widget, ReduxCover) else widget._clock
+        assert not timer.isActive(), widget_type.__name__
+window.motion_check.setChecked(True)
+for widget_type in (ShimmerText, AuroraCard, ReduxCover):
+    for widget in window.findChildren(widget_type):
+        timer = widget._motion if isinstance(widget, ReduxCover) else widget._clock
+        assert timer.isActive(), widget_type.__name__
+# A collection selection changes local preview only, without a game patch.
+from PySide6.QtWidgets import QMessageBox
+original_info = QMessageBox.information
+QMessageBox.information = lambda *args, **kwargs: QMessageBox.Ok
+try:
+    window.activate_collection_pack("Coral", "SAKURA DREAM")
+    assert window.settings.value("collection/active") == "SAKURA DREAM"
+    assert window.effect_sliders["brightness"].value() == 12
+    assert window.collection_active.text().endswith("SAKURA DREAM")
+finally:
+    QMessageBox.information = original_info
 window.steam_timer.stop()
 window.close()
 QTimer.singleShot(0, app.quit)
