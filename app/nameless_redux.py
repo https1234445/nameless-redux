@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.2.0-dev"
+VERSION = "2.3.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -796,9 +796,9 @@ class ReduxWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(244)
+        sidebar.setFixedWidth(258)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(22, 26, 18, 22)
+        side.setContentsMargins(18, 28, 18, 20)
         side.setSpacing(10)
 
         brand = QLabel("N A M E L E S S")
@@ -808,6 +808,10 @@ class ReduxWindow(QMainWindow):
         sub.setObjectName("subbrand")
         side.addWidget(sub)
         side.addSpacing(28)
+        nav_label = QLabel("WORKSPACE")
+        nav_label.setObjectName("navSection")
+        side.addWidget(nav_label)
+        side.addSpacing(8)
 
         self.stack = QStackedWidget()
         self.stack.setObjectName("pageStack")
@@ -823,6 +827,12 @@ class ReduxWindow(QMainWindow):
             ("Settings", "⚙"),
         ]
         for name, glyph in nav_items:
+            if name in ("Sound Library", "Game Center"):
+                side.addSpacing(17)
+                group = QLabel("TOOLS" if name == "Sound Library" else "SYSTEM")
+                group.setObjectName("navSection")
+                side.addWidget(group)
+                side.addSpacing(6)
             btn = QPushButton(f"{glyph}    {name}")
             btn.setObjectName("nav")
             btn.setCheckable(True)
@@ -833,24 +843,33 @@ class ReduxWindow(QMainWindow):
             setattr(self, "nav_" + name.lower().replace(" ", "_"), btn)
 
         side.addStretch()
-        version = QLabel(f"BUILD {VERSION}\nOCEAN / MOTION DESIGN")
+        version = QLabel(f"NAMELESS REDUX / {VERSION}\nROB RUN EDITION")
         version.setObjectName("version")
         side.addWidget(version)
 
         content = AmbientSurface()
         content.setObjectName("contentSurface")
         content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(30, 24, 30, 24)
+        content_layout.setContentsMargins(34, 22, 34, 26)
         content_layout.setSpacing(16)
         header = QHBoxLayout()
         self.page_title = QLabel("Overview")
         self.page_title.setObjectName("pageTitle")
         header.addWidget(self.page_title)
         header.addStretch()
-        status = QLabel("●  SYSTEM READY")
-        status.setObjectName("status")
-        header.addWidget(status)
+        self.top_game_status = QLabel("ROB RUN  /  CHECKING")
+        self.top_game_status.setObjectName("status")
+        header.addWidget(self.top_game_status)
+        header.addSpacing(12)
+        launch_button = QPushButton("▶  LAUNCH GAME")
+        launch_button.setObjectName("primaryAction")
+        launch_button.clicked.connect(self.launch_steam_game)
+        header.addWidget(launch_button)
         content_layout.addLayout(header)
+        separator = QFrame()
+        separator.setObjectName("headerRule")
+        separator.setFixedHeight(1)
+        content_layout.addWidget(separator)
         content_layout.addWidget(self.stack, 1)
 
         main.addWidget(sidebar)
@@ -870,8 +889,8 @@ class ReduxWindow(QMainWindow):
         frame = QFrame()
         frame.setObjectName("card")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(20, 18, 20, 18)
-        layout.setSpacing(9)
+        layout.setContentsMargins(24, 22, 24, 22)
+        layout.setSpacing(12)
         label = QLabel(title)
         label.setObjectName("cardTitle")
         layout.addWidget(label)
@@ -889,6 +908,7 @@ class ReduxWindow(QMainWindow):
         s = QLabel(subtitle)
         s.setObjectName("muted")
         s.setWordWrap(True)
+        box.setSpacing(7)
         box.addWidget(t)
         box.addWidget(s)
         return box
@@ -901,9 +921,9 @@ class ReduxWindow(QMainWindow):
         hero = GradientHero()
         self.hero = hero
         hero.setObjectName("heroCard")
-        hero.setMinimumHeight(188)
+        hero.setMinimumHeight(224)
         hl = QVBoxLayout(hero)
-        hl.setContentsMargins(28, 22, 28, 22)
+        hl.setContentsMargins(34, 30, 34, 30)
         hl.setSpacing(10)
         tag = QLabel("N A M E L E S S   /   ROB RUN EDITION")
         tag.setObjectName("accent")
@@ -914,6 +934,18 @@ class ReduxWindow(QMainWindow):
         desc = QLabel("Visual Lab    /    Steam Connect    /    Profiles    /    Sound Studio")
         desc.setObjectName("heroDescription")
         hl.addWidget(desc)
+        hl.addStretch()
+        hero_actions = QHBoxLayout()
+        hero_actions.setSpacing(10)
+        open_visuals = QPushButton("EXPLORE VISUAL LAB   ↗")
+        open_visuals.setObjectName("primaryAction")
+        open_visuals.clicked.connect(lambda: self.navigate("Visuals Studio"))
+        hero_actions.addWidget(open_visuals)
+        open_steam = QPushButton("STEAM CONNECT")
+        open_steam.clicked.connect(lambda: self.navigate("Game Center"))
+        hero_actions.addWidget(open_steam)
+        hero_actions.addStretch()
+        hl.addLayout(hero_actions)
         l.addWidget(hero)
         grid = QGridLayout()
         stats = [
@@ -930,8 +962,10 @@ class ReduxWindow(QMainWindow):
             cl.addWidget(val)
             grid.addWidget(c, 0, i)
             self.stat_values.append(val)
+        grid.setHorizontalSpacing(14)
+        grid.setVerticalSpacing(14)
         l.addLayout(grid)
-        quick, ql = self.card("LAUNCH PAD", "Everything you need, one click away.")
+        quick, ql = self.card("QUICK ACCESS", "Jump into your workspace.")
         row = QHBoxLayout()
         for text, target in [("Visuals Studio", "Visuals Studio"),
                              ("Sound Library", "Sound Library"),
@@ -940,8 +974,17 @@ class ReduxWindow(QMainWindow):
             b.clicked.connect(lambda checked=False, n=target: self.navigate(n))
             row.addWidget(b)
         ql.addLayout(row)
-        l.addWidget(quick)
-        note = QLabel("This app creates local previews and saves settings on this PC. It does not modify ROB RUN.")
+        overview_bottom = QHBoxLayout()
+        overview_bottom.setSpacing(14)
+        overview_bottom.addWidget(quick, 3)
+        steam_shortcut, steam_shortcut_layout = self.card(
+            "ROB RUN  /  STEAM", "Connect to your installed game safely.")
+        steam_launch = QPushButton("OPEN GAME CENTER   ↗")
+        steam_launch.clicked.connect(lambda: self.navigate("Game Center"))
+        steam_shortcut_layout.addWidget(steam_launch)
+        overview_bottom.addWidget(steam_shortcut, 2)
+        l.addLayout(overview_bottom)
+        note = QLabel("Preview-only effects  •  Local profiles  •  No game memory modification")
         note.setObjectName("muted")
         note.setWordWrap(True)
         l.addWidget(note)
@@ -951,7 +994,7 @@ class ReduxWindow(QMainWindow):
         # Visuals
         page = QWidget()
         l = QVBoxLayout(page)
-        l.addLayout(self.heading("VISUALS STUDIO", "Explore ocean-inspired color directions in the app preview."))
+        l.addLayout(self.heading("VISUAL LAB", "Live color controls and real ROB RUN screenshot comparisons."))
         c, cl = self.card("COLOR PRESET", "Choose a base palette.")
         self.palette_combo = QComboBox()
         self.palette_combo.addItems(PRESETS.keys())
@@ -1408,6 +1451,7 @@ class ReduxWindow(QMainWindow):
         folder = find_steam_game()
         if folder is None:
             self.steam_status.setText("● ROB RUN NOT FOUND IN STEAM LIBRARIES")
+            self.top_game_status.setText("● ROB RUN  /  NOT FOUND")
             return
         if not self.game_path_input.text():
             self.game_path_input.setText(str(folder))
@@ -1424,6 +1468,7 @@ class ReduxWindow(QMainWindow):
         self.steam_status.setText(
             ("● ROB RUN RUNNING" if running else "● ROB RUN INSTALLED")
             + "  •  " + str(folder))
+        self.top_game_status.setText("● ROB RUN  /  " + ("RUNNING" if running else "INSTALLED"))
 
     def launch_steam_game(self):
         import webbrowser
@@ -1660,7 +1705,11 @@ class ReduxWindow(QMainWindow):
                 if target.widget() is not None:
                     target.widget().update()
             self.stack.update()
-        self.page_title.setText(name)
+        self.page_title.setText({
+            "Overview": "Dashboard",
+            "Visuals Studio": "Visual Lab",
+            "Game Center": "Steam Connect",
+        }.get(name, name))
         for key in ["overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
             btn = getattr(self, "nav_" + key)
             btn.setChecked(btn.text().endswith(name))
@@ -2222,6 +2271,18 @@ class ReduxWindow(QMainWindow):
             QWidget#contentSurface { background: transparent; }
             QFrame#sidebar { background: #111215; border-right: 1px solid #2C2D31; }
             QLabel { background: transparent; color: #F1F0EC; }
+            QLabel#navSection {
+                color: #77777D; font-size: 9px; font-weight: 700;
+                letter-spacing: 2px; padding-left: 12px;
+            }
+            QFrame#headerRule { background: #303136; border: none; }
+            QPushButton#primaryAction {
+                background: #E6A16D; color: #171412;
+                border: 1px solid #E6A16D; font-weight: 800;
+            }
+            QPushButton#primaryAction:hover {
+                background: #F4B98A; border-color: #F4B98A;
+            }
             QLabel#brand { color: #FAF8F3; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
             QLabel#subbrand { color: #E99C62; font-size: 9px; letter-spacing: 1px; }
             QLabel#version { color: #77777A; font-size: 10px; }
