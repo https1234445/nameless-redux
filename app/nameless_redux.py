@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.5.0-rc3"
+VERSION = "3.6.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1974,11 +1974,31 @@ class ReduxWindow(QMainWindow):
             note = QLabel("CONCEPT ART / NOT AN INSTALLED GAME MOD")
             note.setObjectName("muted")
             inner.addWidget(note)
+            if name == "SAKURA DREAM":
+                features = QLabel(
+                    "FULL PACK PLAN  /  Pink sky • Sakura weapon skins • "
+                    "Gentle gunshots • Petal impact particles")
+                features.setWordWrap(True)
+                features.setObjectName("accent")
+                inner.addWidget(features)
+                compatibility = QLabel(
+                    "GAME INSTALL: NOT AVAILABLE • ROB RUN uses Easy Anti-Cheat "
+                    "and has no verified official modding API. Selecting this "
+                    "look does not modify the game.")
+                compatibility.setWordWrap(True)
+                compatibility.setObjectName("muted")
+                inner.addWidget(compatibility)
             activate = GlowButton("SELECT REDUX  ↗")
             activate.setObjectName("primaryAction")
             activate.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
             inner.addWidget(activate)
+            if name == "SAKURA DREAM":
+                install = QPushButton("INSTALL INTO ROB RUN  /  UNAVAILABLE")
+                install.setEnabled(False)
+                install.setToolTip(
+                    "Waiting for an officially supported and safe mod installation method.")
+                inner.addWidget(install)
             grid.addWidget(card, i // 2, i % 2)
         layout.addLayout(grid)
         active = self.settings.value("collection/active", "")
