@@ -12,6 +12,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve, Property, QTimer, QPoint
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient, QRadialGradient, QImage, QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
+from redux_showroom import ReduxShowroom
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -190,7 +191,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.7.0-dev"
+VERSION = "3.8.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1174,6 +1175,10 @@ class ReduxWindow(QMainWindow):
         open_steam = QPushButton("STEAM CONNECT")
         open_steam.clicked.connect(lambda: self.navigate("Game Center"))
         hero_actions.addWidget(open_steam)
+        showroom = QPushButton("LIVE REDUX SHOWROOM")
+        showroom.clicked.connect(
+            lambda checked=False: self.open_redux_showroom())
+        hero_actions.addWidget(showroom)
         hero_actions.addStretch()
         hl.addLayout(hero_actions)
         l.addWidget(hero)
@@ -1974,6 +1979,14 @@ class ReduxWindow(QMainWindow):
         performance_note.setObjectName("muted")
         performance_note.setWordWrap(True)
         layout.addWidget(performance_note)
+        showroom_intro = QHBoxLayout()
+        showroom_button = GlowButton("OPEN INTERACTIVE REDUX SHOWROOM   ↗")
+        showroom_button.setObjectName("primaryAction")
+        showroom_button.clicked.connect(
+            lambda checked=False: self.open_redux_showroom())
+        showroom_intro.addWidget(showroom_button)
+        showroom_intro.addStretch()
+        layout.addLayout(showroom_intro)
         grid = QGridLayout()
         grid.setSpacing(14)
         packs = [
@@ -2005,6 +2018,10 @@ class ReduxWindow(QMainWindow):
             compatibility.setWordWrap(True)
             compatibility.setObjectName("muted")
             inner.addWidget(compatibility)
+            demo = QPushButton("TRY LIVE DEMO  /  SKY + WEAPON + HIT FX")
+            demo.clicked.connect(
+                lambda checked=False, n=name: self.open_redux_showroom(n))
+            inner.addWidget(demo)
             activate = GlowButton("SELECT REDUX  ↗")
             activate.setObjectName("primaryAction")
             activate.clicked.connect(
@@ -2035,6 +2052,13 @@ class ReduxWindow(QMainWindow):
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setWidget(page)
         self.add_page("Redux Collection", scroll)
+
+    def open_redux_showroom(self, name="SAKURA DREAM"):
+        """Open a self-contained concept viewer; never interact with game files."""
+        dialog = ReduxShowroom(
+            self, initial_pack=name,
+            reduce_motion=not self.motion_check.isChecked())
+        dialog.exec()
 
     def preview_collection_pack(self, palette, name):
         self.palette_combo.setCurrentText(palette)
