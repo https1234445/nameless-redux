@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.1.0-dev"
+VERSION = "2.2.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -698,8 +698,8 @@ class AmbientSurface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._phase = 0.0
-        self.gradient_start = QColor('#11707e')
-        self.gradient_end = QColor('#0f5386')
+        self.gradient_start = QColor('#493327')
+        self.gradient_end = QColor('#14171B')
         self._clock = QTimer(self)
         self._clock.setInterval(50)
         self._clock.timeout.connect(self._tick)
@@ -715,7 +715,7 @@ class AmbientSurface(QWidget):
         import math
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), QColor('#08131d'))
+        painter.fillRect(self.rect(), QColor('#0C0D0F'))
         w, h = max(1, self.width()), max(1, self.height())
         for cx, cy, radius, color in [
             (0.87 + 0.045 * math.sin(self._phase), 0.10 + 0.035 * math.cos(self._phase), 0.75, QColor(self.gradient_start.red(), self.gradient_start.green(), self.gradient_start.blue(), 57)),
@@ -736,8 +736,8 @@ class GradientHero(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._offset = 0.0
-        self.gradient_start = QColor('#123d4b')
-        self.gradient_end = QColor('#0a2030')
+        self.gradient_start = QColor('#493327')
+        self.gradient_end = QColor('#14171B')
         self._clock = QTimer(self)
         self._clock.setInterval(65)
         self._clock.timeout.connect(self._tick)
@@ -756,11 +756,11 @@ class GradientHero(QFrame):
         gradient = QLinearGradient(0, 0, self.width(), self.height())
         middle = 0.48 + 0.11 * math.sin(self._offset)
         gradient.setColorAt(0.0, self.gradient_start)
-        gradient.setColorAt(middle, QColor('#102b42'))
+        gradient.setColorAt(middle, QColor('#222025'))
         gradient.setColorAt(1.0, self.gradient_end)
         painter.setBrush(gradient)
-        painter.setPen(QPen(QColor('#286779'), 1))
-        painter.drawRoundedRect(rect, 20, 20)
+        painter.setPen(QPen(QColor('#594439'), 1))
+        painter.drawRoundedRect(rect, 13, 13)
         painter.end()
 
 class ReduxWindow(QMainWindow):
@@ -779,7 +779,7 @@ class ReduxWindow(QMainWindow):
         self.audio_files = [str(p) for p in self.audio_files if isinstance(p, str) and Path(p).is_file()]
         self.profiles = self.read_json_setting("profiles", {})
         self.custom_visual_packs = self.read_json_setting("visual/packs", {})
-        self.theme_colors = self.read_json_setting("theme/colors", {"start": "#11707e", "end": "#0f5386"})
+        self.theme_colors = self.read_json_setting("theme/colors", {"start": "#493327", "end": "#14171B"})
         self.player = None
         self.audio_output = None
         if MULTIMEDIA_AVAILABLE:
@@ -804,7 +804,7 @@ class ReduxWindow(QMainWindow):
         brand = QLabel("N A M E L E S S")
         brand.setObjectName("brand")
         side.addWidget(brand)
-        sub = QLabel("R E D U X   /   O C E A N   E D I T I O N")
+        sub = QLabel("R E D U X   /   ROB RUN EDITION")
         sub.setObjectName("subbrand")
         side.addWidget(sub)
         side.addSpacing(28)
@@ -905,13 +905,13 @@ class ReduxWindow(QMainWindow):
         hl = QVBoxLayout(hero)
         hl.setContentsMargins(28, 22, 28, 22)
         hl.setSpacing(10)
-        tag = QLabel("N A M E L E S S   /   O C E A N   E D I T I O N")
+        tag = QLabel("N A M E L E S S   /   ROB RUN EDITION")
         tag.setObjectName("accent")
         hl.addWidget(tag)
-        headline = QLabel("OCEAN REBORN  /  STEAM CONNECT")
+        headline = QLabel("BUILT FOR YOUR GAME.")
         headline.setObjectName("heroHeadline")
         hl.addWidget(headline)
-        desc = QLabel("Gradient themes  /  Cinematic previews  /  Personal profiles")
+        desc = QLabel("Visual Lab    /    Steam Connect    /    Profiles    /    Sound Studio")
         desc.setObjectName("heroDescription")
         hl.addWidget(desc)
         l.addWidget(hero)
@@ -2211,73 +2211,96 @@ class ReduxWindow(QMainWindow):
             self.statusBar().showMessage("Preferences reset.", 3000)
 
     def apply_style(self):
+        """ROB RUN-inspired editorial minimalism: graphite, bone, restrained signal orange."""
         self.setStyleSheet("""
             QMainWindow, QWidget, QWidget#root, QWidget#pageStack, QStackedWidget,
             QScrollArea, QScrollArea#oceanScroll, QWidget#oceanViewport,
             QScrollArea > QWidget > QWidget {
-                background-color: #08131d; color: #e5f4f7;
-                font-family: 'Segoe UI';
+                background-color: #0C0D0F; color: #F1F0EC;
+                font-family: 'Segoe UI'; font-size: 12px;
             }
             QWidget#contentSurface { background: transparent; }
-            QFrame#sidebar { background: #070e19; border-right: 1px solid #23415c; }
-            QLabel { background: transparent; color: #eaf5f7; }
-            QLabel#brand { color: #efffff; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
-            QLabel#subbrand { color: #5ba6ad; font-size: 8px; letter-spacing: 1px; }
-            QLabel#version { color: #5d8994; font-size: 10px; }
-            QLabel#pageTitle { color: #f1fcff; font-size: 26px; font-weight: 700; }
-            QLabel#status { color: #79decf; font-size: 10px; font-weight: 700; }
-            QLabel#sectionTitle { color: #f0fbff; font-size: 19px; font-weight: 700; }
-            QLabel#cardTitle { color: #c1e4e8; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
-            QLabel#muted { color: #91abb6; font-size: 11px; }
-            QLabel#accent { color: #79dfd7; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
-            QLabel#stat { color: #a0f3e6; font-size: 34px; font-weight: 700; }
-            QLabel#heroHeadline { color: #f5ffff; font-size: 24px; font-weight: 800; }
-            QLabel#heroDescription { color: #afcbd3; font-size: 12px; }
+            QFrame#sidebar { background: #111215; border-right: 1px solid #2C2D31; }
+            QLabel { background: transparent; color: #F1F0EC; }
+            QLabel#brand { color: #FAF8F3; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
+            QLabel#subbrand { color: #E99C62; font-size: 9px; letter-spacing: 1px; }
+            QLabel#version { color: #77777A; font-size: 10px; }
+            QLabel#pageTitle { color: #F8F7F4; font-size: 29px; font-weight: 700; }
+            QLabel#status { color: #E8A06C; font-size: 11px; font-weight: 600; }
+            QLabel#sectionTitle { color: #F4F2EF; font-size: 21px; font-weight: 700; }
+            QLabel#cardTitle { color: #D6D2CD; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+            QLabel#muted { color: #99999D; font-size: 12px; }
+            QLabel#accent { color: #F0A66D; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
+            QLabel#stat { color: #F5F2EB; font-size: 36px; font-weight: 700; }
+            QLabel#heroHeadline { color: #FFF9F2; font-size: 29px; font-weight: 800; }
+            QLabel#heroDescription { color: #C4C1BD; font-size: 12px; }
             QFrame#card, QFrame#statCard {
-                background-color: rgba(12, 29, 47, 238);
-                border: 1px solid #315473; border-radius: 20px;
+                background-color: #17181B;
+                border: 1px solid #303136; border-radius: 13px;
             }
-            QFrame#card:hover, QFrame#statCard:hover { border-color: #387484; background-color: #122d3a; }
+            QFrame#card:hover, QFrame#statCard:hover {
+                border-color: #665042; background-color: #1C1D21;
+            }
             QFrame#heroCard { background: transparent; border: 0px; }
-            QPushButton#nav { background: transparent; color: #8baab7; text-align: left;
-                padding: 13px 14px; border: 0; border-radius: 10px; font-size: 12px; font-weight: 500; }
-            QPushButton#nav:hover { background: #122e3c; color: #e6fcff; }
-            QPushButton#nav:checked { background: #153b58; color: #b1faff;
-                border-left: 2px solid #6adaca; font-weight: 700; }
-            QPushButton { background-color: #154762; color: #e5f9fb; border: 1px solid #367e9b;
-                border-radius: 10px; padding: 11px 15px; font-size: 11px; font-weight: 700; }
-            QPushButton:hover { background-color: #1a5260; border-color: #5cbbb8; }
-            QPushButton:pressed { background-color: #0f303e; }
-            QPushButton:disabled { color: #64818b; background-color: #102631; border-color: #1b3a45; }
-            QComboBox, QLineEdit, QListWidget { background-color: #0b202c; color: #e8f8fb;
-                border: 1px solid #284b5a; border-radius: 9px; padding: 9px; }
-            QComboBox:hover, QLineEdit:focus, QListWidget:focus { border-color: #5ebcb7; }
-            QComboBox QAbstractItemView { background-color: #0b2531; color: #e6f5f7;
-                selection-background-color: #1e5966; }
+            QPushButton#nav {
+                background: transparent; color: #9D9DA2; text-align: left;
+                padding: 14px 15px; border: 0; border-radius: 8px;
+                font-size: 12px; font-weight: 500;
+            }
+            QPushButton#nav:hover { background: #202125; color: #F4F2EF; }
+            QPushButton#nav:checked {
+                background: #292521; color: #FFF1E4;
+                border-left: 3px solid #F0A66D; font-weight: 700;
+            }
+            QPushButton {
+                background-color: #292A2E; color: #F4F2EF;
+                border: 1px solid #44454A; border-radius: 8px;
+                padding: 11px 16px; font-size: 11px; font-weight: 700;
+            }
+            QPushButton:hover { background-color: #38322D; border-color: #E6A16D; }
+            QPushButton:pressed { background-color: #5B3B29; }
+            QPushButton:disabled { color: #77777A; background: #1D1E21; border-color: #303136; }
+            QComboBox, QLineEdit, QListWidget {
+                background-color: #111215; color: #F0EEEB;
+                border: 1px solid #38393E; border-radius: 8px; padding: 10px;
+                selection-background-color: #71472E;
+            }
+            QComboBox:hover, QLineEdit:focus, QListWidget:focus { border-color: #D99360; }
+            QComboBox QAbstractItemView {
+                background-color: #202125; color: #F4F2EF;
+                selection-background-color: #65442F;
+            }
             QSlider { background: transparent; }
-            QSlider::groove:horizontal { height: 6px; background: #193b47; border-radius: 3px; }
-            QSlider::sub-page:horizontal { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                stop:0 #287b99, stop:1 #66e0cc); border-radius: 3px; }
-            QSlider::handle:horizontal { background: #a8fff1; width: 18px;
-                margin: -7px 0; border: 2px solid #267b88; border-radius: 9px; }
-            QSlider::handle:horizontal:hover { background: white; border-color: #69e3d7; }
-            OceanToggle { color: #b4d8de; background: transparent; font-size: 11px; }
-            QProgressBar { background: #0b2530; border: 1px solid #255664;
-                border-radius: 7px; color: #d7f9f8; text-align: center; }
-            QProgressBar::chunk { background: #46cbbd; border-radius: 6px; }
-            QStatusBar { background-color: #08151f; color: #8ce6dd; }
-            QScrollBar:vertical { background: #081923; width: 9px; margin: 0; }
-            QScrollBar::handle:vertical { background: #2a5c6b; border-radius: 4px; min-height: 30px; }
-            QScrollBar::handle:vertical:hover { background: #4a9caa; }
+            QSlider::groove:horizontal { height: 5px; background: #3A3B3E; border-radius: 2px; }
+            QSlider::sub-page:horizontal { background: #D99565; border-radius: 2px; }
+            QSlider::handle:horizontal {
+                background: #F5D2B4; width: 16px; margin: -6px 0;
+                border: 2px solid #C58254; border-radius: 8px;
+            }
+            QSlider::handle:horizontal:hover { background: #FFFFFF; }
+            OceanToggle { color: #D6D2CD; background: transparent; font-size: 12px; }
+            QProgressBar {
+                background: #202125; border: 1px solid #44454A;
+                border-radius: 5px; color: #F2EEE8; text-align: center;
+            }
+            QProgressBar::chunk { background: #D99565; border-radius: 4px; }
+            QStatusBar { background-color: #111215; color: #D5A27F; }
+            QScrollBar:vertical { background: #111215; width: 8px; margin: 0; }
+            QScrollBar::handle:vertical { background: #4B4C51; border-radius: 4px; min-height: 30px; }
+            QScrollBar::handle:vertical:hover { background: #8C6C55; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+            QToolTip {
+                background: #25262A; color: #FAF7F2;
+                border: 1px solid #665042; padding: 6px;
+            }
         """)
         from PySide6.QtGui import QPalette
         palette = self.palette()
-        palette.setColor(QPalette.Window, QColor('#08131d'))
-        palette.setColor(QPalette.Base, QColor('#0b202c'))
-        palette.setColor(QPalette.AlternateBase, QColor('#102a36'))
-        palette.setColor(QPalette.WindowText, QColor('#e6f5f7'))
-        palette.setColor(QPalette.Text, QColor('#e6f5f7'))
+        palette.setColor(QPalette.Window, QColor('#0C0D0F'))
+        palette.setColor(QPalette.Base, QColor('#111215'))
+        palette.setColor(QPalette.AlternateBase, QColor('#202125'))
+        palette.setColor(QPalette.WindowText, QColor('#F1F0EC'))
+        palette.setColor(QPalette.Text, QColor('#F1F0EC'))
         self.setPalette(palette)
 
 
