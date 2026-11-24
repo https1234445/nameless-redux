@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.2.0-dev"
+VERSION = "3.3.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -756,13 +756,92 @@ class AmbientSurface(QWidget):
         painter.end()
 
 
+class ShimmerText(QLabel):
+    """Animated gradient typography with crisp native text rendering."""
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self._phase = 0.0
+        self._clock = QTimer(self)
+        self._clock.setInterval(42)
+        self._clock.timeout.connect(self._tick)
+        self._clock.start()
+
+    def _tick(self):
+        if self.isVisible():
+            self._phase = (self._phase + .018) % 6.283185
+            self.update()
+
+    def paintEvent(self, event):
+        import math
+        from PySide6.QtCore import QRectF
+        from PySide6.QtGui import QPainterPath
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.TextAntialiasing)
+        fm = self.fontMetrics()
+        text = self.text()
+        x = 0 if self.alignment() & Qt.AlignLeft else max(0, (self.width()-fm.horizontalAdvance(text))/2)
+        y = (self.height()+fm.ascent()-fm.descent())/2
+        path = QPainterPath()
+        path.addText(x, y, self.font(), text)
+        shimmer = (math.sin(self._phase)+1)/2
+        gradient = QLinearGradient(0, 0, max(1,self.width()), 0)
+        gradient.setColorAt(0, QColor("#89C8FF"))
+        gradient.setColorAt(max(.01,min(.99, .25 + shimmer*.45)), QColor("#FFFFFF"))
+        gradient.setColorAt(1, QColor("#F2A5F4"))
+        p.setPen(Qt.NoPen)
+        p.setBrush(gradient)
+        p.drawPath(path)
+        p.end()
+
+
+class AuroraCard(QFrame):
+    """A softly animated gradient outline, without a graphics effect on children."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("card")
+        self._phase = 0.0
+        self._clock = QTimer(self)
+        self._clock.setInterval(65)
+        self._clock.timeout.connect(self._tick)
+        self._clock.start()
+
+    def _tick(self):
+        if self.isVisible():
+            self._phase = (self._phase + .025) % 6.283185
+            self.update()
+
+    def paintEvent(self, event):
+        import math
+        from PySide6.QtCore import QRectF
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        rect = QRectF(self.rect()).adjusted(2, 2, -2, -2)
+        bg = QLinearGradient(0, 0, self.width(), self.height())
+        bg.setColorAt(0, QColor("#222544"))
+        bg.setColorAt(.6, QColor("#171C36"))
+        bg.setColorAt(1, QColor("#23213E"))
+        p.setBrush(bg)
+        p.setPen(Qt.NoPen)
+        p.drawRoundedRect(rect, 14, 14)
+        t = (math.sin(self._phase)+1)/2
+        outline = QLinearGradient(0, 0, self.width(), self.height())
+        outline.setColorAt(0, QColor("#8B9DFB"))
+        outline.setColorAt(max(.01,min(.99,.15+.65*t)), QColor("#F4BBFF"))
+        outline.setColorAt(1, QColor("#5CE0F5"))
+        p.setBrush(Qt.NoBrush)
+        p.setPen(QPen(outline, 2))
+        p.drawRoundedRect(rect, 14, 14)
+        p.end()
+
+
 class GradientHero(QFrame):
     """A restrained animated gradient hero; children are normal Qt widgets."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self._offset = 0.0
-        self.gradient_start = QColor('#493327')
-        self.gradient_end = QColor('#14171B')
+        self.gradient_start = QColor('#7959C8')
+        self.gradient_end = QColor('#235F93')
         self._clock = QTimer(self)
         self._clock.setInterval(65)
         self._clock.timeout.connect(self._tick)
@@ -784,7 +863,11 @@ class GradientHero(QFrame):
         gradient.setColorAt(middle, QColor('#222025'))
         gradient.setColorAt(1.0, self.gradient_end)
         painter.setBrush(gradient)
-        painter.setPen(QPen(QColor('#594439'), 1))
+        border = QLinearGradient(0, 0, self.width(), self.height())
+        border.setColorAt(0, QColor("#B6B4FF"))
+        border.setColorAt(.5, QColor("#FFA8EE"))
+        border.setColorAt(1, QColor("#76E4FF"))
+        painter.setPen(QPen(border, 2))
         painter.drawRoundedRect(rect, 13, 13)
         painter.end()
 
@@ -946,7 +1029,7 @@ class ReduxWindow(QMainWindow):
         side.setContentsMargins(18, 28, 18, 20)
         side.setSpacing(10)
 
-        brand = QLabel("N A M E L E S S")
+        brand = ShimmerText("N A M E L E S S")
         brand.setObjectName("brand")
         side.addWidget(brand)
         sub = QLabel("R E D U X   /   ROB RUN EDITION")
@@ -1033,8 +1116,7 @@ class ReduxWindow(QMainWindow):
         QTimer.singleShot(900, self.load_initial_screenshot)
 
     def card(self, title, subtitle=None):
-        frame = QFrame()
-        frame.setObjectName("card")
+        frame = AuroraCard()
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(24, 22, 24, 22)
         layout.setSpacing(12)
@@ -1075,7 +1157,7 @@ class ReduxWindow(QMainWindow):
         tag = QLabel("N A M E L E S S   /   ROB RUN EDITION")
         tag.setObjectName("accent")
         hl.addWidget(tag)
-        headline = QLabel("BUILT FOR YOUR GAME.")
+        headline = ShimmerText("BUILT FOR YOUR GAME.")
         headline.setObjectName("heroHeadline")
         hl.addWidget(headline)
         desc = QLabel("Visual Lab    /    Steam Connect    /    Profiles    /    Sound Studio")
@@ -2603,13 +2685,9 @@ class ReduxWindow(QMainWindow):
             QLabel#stat { color: #F5F2EB; font-size: 36px; font-weight: 700; }
             QLabel#heroHeadline { color: #FFF9F2; font-size: 29px; font-weight: 800; }
             QLabel#heroDescription { color: #C4C1BD; font-size: 12px; }
-            QFrame#card, QFrame#statCard {
-                background-color: #17181B;
-                border: 1px solid #303136; border-radius: 13px;
-            }
-            QFrame#card:hover, QFrame#statCard:hover {
-                border-color: #665042; background-color: #1C1D21;
-            }
+            QFrame#card { background: transparent; border: 0px; }
+            QFrame#statCard { background: #202542; border: 1px solid #777BC3; border-radius: 13px; }
+            QFrame#statCard:hover { border-color: #E3B3FF; background: #292D50; }
             QFrame#heroCard { background: transparent; border: 0px; }
             QPushButton#nav {
                 background: transparent; color: #C4C6E6; text-align: left;
