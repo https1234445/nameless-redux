@@ -12,8 +12,8 @@ from nameless_redux import ReduxWindow
 
 app = QApplication([])
 window = ReduxWindow()
-assert window.stack.count() == 8, "All eight workspace pages must exist"
-for name in ("Overview", "Visuals Studio", "Theme Lab", "Sound Library",
+assert window.stack.count() == 9, "All nine workspace pages must exist"
+for name in ("Redux Collection", "Overview", "Visuals Studio", "Theme Lab", "Sound Library",
              "Crosshair Studio", "Profiles", "Game Center", "Settings"):
     window.navigate(name)
     assert window.stack.currentWidget() is window.pages[name], name
