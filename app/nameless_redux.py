@@ -3,12 +3,15 @@ import json
 import hashlib
 import zipfile
 import os
+import re
+import subprocess
 from datetime import datetime, timezone
 from collections import Counter
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve, Property, QTimer, QPoint
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient, QRadialGradient, QImage, QPixmap
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -187,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.0.0"
+VERSION = "2.1.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -333,6 +336,50 @@ def extract_backup_archive(archive_path, destination_dir):
     return len(planned)
 
 
+
+STEAM_APP_ID = "4262460"
+
+def find_steam_game():
+    """Read Steam library manifests only; never touch game data."""
+    roots = []
+    if os.name == "nt":
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\Valve\\Steam") as key:
+                roots.append(Path(winreg.QueryValueEx(key, "SteamPath")[0]))
+        except (OSError, ValueError):
+            pass
+        for var in ("PROGRAMFILES(X86)", "PROGRAMFILES"):
+            if os.environ.get(var):
+                roots.append(Path(os.environ[var]) / "Steam")
+    roots.append(Path.home() / ".steam" / "steam")
+    for root in roots:
+        steamapps = root / "steamapps"
+        libraries = [steamapps]
+        vdf = steamapps / "libraryfolders.vdf"
+        if vdf.is_file():
+            try:
+                text = vdf.read_text(encoding="utf-8-sig", errors="replace")
+                for folder in re.findall(r'"path"\\s*"([^"]+)"', text, re.I):
+                    libraries.append(Path(folder.replace("\\\\", "\\")) / "steamapps")
+            except OSError:
+                pass
+        for library in libraries:
+            manifest = library / ("appmanifest_" + STEAM_APP_ID + ".acf")
+            if not manifest.is_file():
+                continue
+            try:
+                data = manifest.read_text(encoding="utf-8-sig", errors="replace")
+                match = re.search(r'"installdir"\\s*"([^"]+)"', data, re.I)
+                if match:
+                    location = library / "common" / match.group(1)
+                    if location.is_dir():
+                        return location
+            except OSError:
+                pass
+    return None
+
+
 class OceanSlider(QSlider):
     """Smooth click-to-seek slider; normal dragging remains responsive."""
     def __init__(self, orientation=Qt.Horizontal, parent=None):
@@ -438,6 +485,7 @@ class EffectsPreview(QWidget):
         self.setMinimumWidth(350)
         self.base = self.make_scene()
         self.filtered = self.base.copy()
+        self.real_screenshot = False
         self._pending = (0, 100, 100, 0)
         self.compare_percent = 50
         self.compare_enabled = True
@@ -506,6 +554,15 @@ class EffectsPreview(QWidget):
         p.drawLine(0, 282, 640, 282)
         p.end()
         return image
+
+    def set_screenshot(self, image):
+        if image.isNull():
+            return False
+        self.base = image.convertToFormat(QImage.Format_RGB32).scaled(
+            960, 540, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.real_screenshot = True
+        self._render_effects()
+        return True
 
     def apply_effects(self, brightness=0, contrast=100, saturation=100, warmth=0):
         self._pending = (brightness, contrast, saturation, warmth)
@@ -711,9 +768,13 @@ class ReduxWindow(QMainWindow):
         super().__init__()
         self.settings = QSettings("NamelessStudio", "NamelessRedux")
         self.setWindowTitle(f"{APP_NAME}  •  {VERSION}")
+        self.network = QNetworkAccessManager(self)
+        self.steam_timer = QTimer(self)
+        self.steam_timer.setInterval(3500)
+        self.steam_timer.timeout.connect(self.refresh_steam_status)
         self._fade_animation = None
-        self.resize(1120, 740)
-        self.setMinimumSize(900, 620)
+        self.resize(1360, 850)
+        self.setMinimumSize(1000, 650)
         self.audio_files = self.read_json_setting("audio/files", [])
         self.audio_files = [str(p) for p in self.audio_files if isinstance(p, str) and Path(p).is_file()]
         self.profiles = self.read_json_setting("profiles", {})
@@ -735,7 +796,7 @@ class ReduxWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(225)
+        sidebar.setFixedWidth(244)
         side = QVBoxLayout(sidebar)
         side.setContentsMargins(22, 26, 18, 22)
         side.setSpacing(10)
@@ -801,6 +862,9 @@ class ReduxWindow(QMainWindow):
         self.load_settings()
         self.restore_audio_list()
         self.navigate("Overview")
+        self.steam_timer.start()
+        QTimer.singleShot(500, self.refresh_steam_status)
+        QTimer.singleShot(900, self.load_official_screenshot)
 
     def card(self, title, subtitle=None):
         frame = QFrame()
@@ -844,7 +908,7 @@ class ReduxWindow(QMainWindow):
         tag = QLabel("N A M E L E S S   /   O C E A N   E D I T I O N")
         tag.setObjectName("accent")
         hl.addWidget(tag)
-        headline = QLabel("OCEAN REBORN  /  2.0")
+        headline = QLabel("OCEAN REBORN  /  STEAM CONNECT")
         headline.setObjectName("heroHeadline")
         hl.addWidget(headline)
         desc = QLabel("Gradient themes  /  Cinematic previews  /  Personal profiles")
@@ -932,9 +996,23 @@ class ReduxWindow(QMainWindow):
         l.addWidget(packs_card)
         self.refresh_visual_packs()
         effects_card, effects_layout = self.card(
-            "VISUAL EFFECTS ENGINE", "Live preview on a generated test scene. Does not change ROB RUN.")
+            "ROB RUN VISUAL LAB", "Real Steam screenshot • before/after grading • live cinematic controls. Preview only.")
         self.effects_preview = EffectsPreview()
+        self.effects_preview.setMinimumHeight(430)
         effects_layout.addWidget(self.effects_preview)
+        screenshot_actions = QHBoxLayout()
+        for title, handler in [
+            ("LOAD OFFICIAL ROB RUN SCREENSHOT", self.load_official_screenshot),
+            ("CHOOSE MY ROB RUN SCREENSHOT", self.choose_preview_screenshot),
+        ]:
+            btn = QPushButton(title)
+            btn.clicked.connect(handler)
+            screenshot_actions.addWidget(btn)
+        effects_layout.addLayout(screenshot_actions)
+        self.preview_source = QLabel("Loading official Steam gameplay screenshot…")
+        self.preview_source.setObjectName("muted")
+        self.preview_source.setWordWrap(True)
+        effects_layout.addWidget(self.preview_source)
         compare_row = QHBoxLayout()
         self.compare_check = OceanToggle("Before / after comparison")
         self.compare_check.setChecked(True)
@@ -1137,7 +1215,21 @@ class ReduxWindow(QMainWindow):
         page = QWidget()
         l = QVBoxLayout(page)
         l.setSpacing(14)
-        l.addLayout(self.heading("GAME CENTER", "Select the ROB RUN installation and inspect it safely. No game files are changed."))
+        l.addLayout(self.heading("GAME CENTER", "Steam Connect • ROB RUN / App ID 4262460 • safe read-only detection"))
+        steam_card, steam_layout = self.card("STEAM CONNECT  /  LIVE", "Find the installed game and launch it through Steam. No injection or game file modification.")
+        self.steam_status = QLabel("Checking Steam installation…")
+        self.steam_status.setObjectName("accent")
+        steam_layout.addWidget(self.steam_status)
+        steam_buttons = QHBoxLayout()
+        for title, handler in [
+            ("FIND ROB RUN", self.refresh_steam_status),
+            ("PLAY VIA STEAM", self.launch_steam_game),
+        ]:
+            btn = QPushButton(title)
+            btn.clicked.connect(handler)
+            steam_buttons.addWidget(btn)
+        steam_layout.addLayout(steam_buttons)
+        l.addWidget(steam_card)
         c, cl = self.card("GAME INSTALLATION", "Choose the game's root folder manually. This does not verify game compatibility.")
         path_row = QHBoxLayout()
         self.game_path_input = QLineEdit()
@@ -1258,6 +1350,84 @@ class ReduxWindow(QMainWindow):
         l.addWidget(c)
         l.addStretch()
         self.add_page("Settings", page)
+
+    def choose_preview_screenshot(self):
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Select a real ROB RUN screenshot", "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.webp)")
+        if filename:
+            image = QImage(filename)
+            if self.effects_preview.set_screenshot(image):
+                self.preview_source.setText("REAL GAME SCREENSHOT • " + Path(filename).name)
+                self.settings.setValue("preview/screenshot", filename)
+            else:
+                QMessageBox.warning(self, "Image error", "Could not open the screenshot.")
+
+    def load_official_screenshot(self):
+        url = QUrl("https://store.steampowered.com/api/appdetails?appids=4262460&l=english")
+        reply = self.network.get(QNetworkRequest(url))
+        reply.finished.connect(lambda r=reply: self._steam_metadata_ready(r))
+
+    def _steam_metadata_ready(self, reply):
+        try:
+            if reply.error():
+                raise ValueError(reply.errorString())
+            payload = json.loads(bytes(reply.readAll()).decode("utf-8"))
+            shots = payload[STEAM_APP_ID]["data"]["screenshots"]
+            if not shots:
+                raise ValueError("No screenshots published")
+            url = QUrl(shots[0]["path_full"])
+            if url.scheme() != "https" or not url.host().endswith("steamstatic.com"):
+                raise ValueError("Unexpected screenshot host")
+            picture_reply = self.network.get(QNetworkRequest(url))
+            picture_reply.finished.connect(lambda r=picture_reply: self._steam_image_ready(r))
+        except (ValueError, KeyError, IndexError, TypeError, UnicodeError) as exc:
+            self.preview_source.setText(
+                "Official Steam image unavailable. Choose a real in-game screenshot (F12). " + str(exc))
+        finally:
+            reply.deleteLater()
+
+    def _steam_image_ready(self, reply):
+        try:
+            if reply.error():
+                raise ValueError(reply.errorString())
+            data = bytes(reply.readAll())
+            if len(data) > 12 * 1024 * 1024:
+                raise ValueError("Image too large")
+            image = QImage.fromData(data)
+            if not self.effects_preview.set_screenshot(image):
+                raise ValueError("Invalid image")
+            self.preview_source.setText(
+                "OFFICIAL ROB RUN SCREENSHOT • Steam / KEFIR • comparison is only a local preview")
+        except ValueError as exc:
+            self.preview_source.setText("Screenshot unavailable: " + str(exc))
+        finally:
+            reply.deleteLater()
+
+    def refresh_steam_status(self):
+        folder = find_steam_game()
+        if folder is None:
+            self.steam_status.setText("● ROB RUN NOT FOUND IN STEAM LIBRARIES")
+            return
+        if not self.game_path_input.text():
+            self.game_path_input.setText(str(folder))
+        running = False
+        if os.name == "nt":
+            try:
+                flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                result = subprocess.run(
+                    ["tasklist", "/FI", "IMAGENAME eq ROB RUN.exe", "/FO", "CSV", "/NH"],
+                    capture_output=True, text=True, timeout=2, creationflags=flags)
+                running = "rob run.exe" in result.stdout.lower()
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        self.steam_status.setText(
+            ("● ROB RUN RUNNING" if running else "● ROB RUN INSTALLED")
+            + "  •  " + str(folder))
+
+    def launch_steam_game(self):
+        import webbrowser
+        webbrowser.open("steam://rungameid/" + STEAM_APP_ID)
 
     def choose_game_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Choose ROB RUN installation")
@@ -2009,6 +2179,10 @@ class ReduxWindow(QMainWindow):
             slider.setValue(max(slider.minimum(), min(slider.maximum(), saved)))
         self.effects_timer.stop()
         self.update_effects_preview()
+        saved_screenshot = self.settings.value("preview/screenshot", "")
+        if saved_screenshot and Path(saved_screenshot).is_file():
+            if self.effects_preview.set_screenshot(QImage(saved_screenshot)):
+                self.preview_source.setText("REAL GAME SCREENSHOT • " + Path(saved_screenshot).name)
 
     def reset_settings(self):
         answer = QMessageBox.question(self, "Reset preferences", "Reset saved visual, crosshair and profile settings?")
@@ -2045,7 +2219,7 @@ class ReduxWindow(QMainWindow):
                 font-family: 'Segoe UI';
             }
             QWidget#contentSurface { background: transparent; }
-            QFrame#sidebar { background: #08151f; border-right: 1px solid #18313c; }
+            QFrame#sidebar { background: #070e19; border-right: 1px solid #23415c; }
             QLabel { background: transparent; color: #eaf5f7; }
             QLabel#brand { color: #efffff; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
             QLabel#subbrand { color: #5ba6ad; font-size: 8px; letter-spacing: 1px; }
@@ -2060,17 +2234,17 @@ class ReduxWindow(QMainWindow):
             QLabel#heroHeadline { color: #f5ffff; font-size: 24px; font-weight: 800; }
             QLabel#heroDescription { color: #afcbd3; font-size: 12px; }
             QFrame#card, QFrame#statCard {
-                background-color: rgba(15, 37, 49, 225);
-                border: 1px solid #244351; border-radius: 16px;
+                background-color: rgba(12, 29, 47, 238);
+                border: 1px solid #315473; border-radius: 20px;
             }
             QFrame#card:hover, QFrame#statCard:hover { border-color: #387484; background-color: #122d3a; }
             QFrame#heroCard { background: transparent; border: 0px; }
             QPushButton#nav { background: transparent; color: #8baab7; text-align: left;
                 padding: 13px 14px; border: 0; border-radius: 10px; font-size: 12px; font-weight: 500; }
             QPushButton#nav:hover { background: #122e3c; color: #e6fcff; }
-            QPushButton#nav:checked { background: #163d4b; color: #9cf4e8;
+            QPushButton#nav:checked { background: #153b58; color: #b1faff;
                 border-left: 2px solid #6adaca; font-weight: 700; }
-            QPushButton { background-color: #143c4a; color: #e5f9fb; border: 1px solid #2a6171;
+            QPushButton { background-color: #154762; color: #e5f9fb; border: 1px solid #367e9b;
                 border-radius: 10px; padding: 11px 15px; font-size: 11px; font-weight: 700; }
             QPushButton:hover { background-color: #1a5260; border-color: #5cbbb8; }
             QPushButton:pressed { background-color: #0f303e; }
