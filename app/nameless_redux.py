@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.1.0-dev"
+VERSION = "3.2.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -822,6 +822,16 @@ class ReduxCover(QWidget):
         super().__init__(parent)
         self.name, self.accent, self.shadow = name, QColor(accent), QColor(shadow)
         self.setMinimumHeight(200)
+        self._phase = 0.0
+        self._motion = QTimer(self)
+        self._motion.setInterval(45)
+        self._motion.timeout.connect(self._animate)
+        self._motion.start()
+
+    def _animate(self):
+        if self.isVisible():
+            self._phase = (self._phase + .035) % 6.283185
+            self.update()
 
     def paintEvent(self, event):
         from PySide6.QtCore import QRectF
@@ -857,30 +867,38 @@ class ReduxCover(QWidget):
             pts.append(QPointF(w, h))
             p.drawPolygon(QPolygonF(pts))
         if self.name == "SAKURA DREAM":
-            p.setPen(QPen(QColor("#3A233D"), 7))
-            p.drawLine(int(w*.78), h, int(w*.77), int(h*.23))
-            for i in range(12):
-                x = w*(.58 + .032*i)
-                y = h*(.16 + .13*math.sin(i*1.7))
+            sway = math.sin(self._phase) * 13
+            p.setPen(QPen(QColor("#4B2943"), 9, Qt.SolidLine, Qt.RoundCap))
+            p.drawLine(int(w*.78), h, int(w*.77+sway), int(h*.22))
+            for i in range(30):
+                x = w*(.52 + .014*i) + sway*(.4 + i/45)
+                y = h*(.13 + .17*math.sin(i*1.7))
                 p.setPen(Qt.NoPen)
-                p.setBrush(QColor("#FFD4EA"))
-                p.drawEllipse(QRectF(x, y, 14, 9))
+                p.setBrush(QColor("#FFD2E9"))
+                p.drawEllipse(QRectF(x, y, 15, 10))
+            # Floating petals move across the entire scene, not just the tree.
+            for i in range(22):
+                x = (w*(i*.071) + self._phase*21*(1+i%3)) % max(1,w)
+                y = (h*(i*.127) + self._phase*14*(1+i%2)) % max(1,h)
+                p.setBrush(QColor("#FFC6E3"))
+                p.drawEllipse(QRectF(x, y, 5+i%4, 3+i%3))
         elif self.name == "NEON NIGHT":
             p.setPen(QPen(QColor("#D8A7FF"), 3))
             for i in range(7):
                 x = int(w*(.2+i*.11))
-                p.drawLine(x, int(h*.55), int(w*.5+(x-w*.5)*1.7), h)
+                shift = math.sin(self._phase*2+i)*9
+                p.drawLine(x, int(h*.55+shift), int(w*.5+(x-w*.5)*1.7), h)
         elif self.name == "FROSTBITE":
             p.setPen(QPen(QColor("#D8F8FF"), 2))
             for i in range(14):
-                x, y = int(w*(i+.5)/15), int(h*(.14+(i%4)*.12))
+                x, y = int(w*(i+.5)/15 + math.sin(self._phase+i)*7), int((h*(.14+(i%4)*.12)+self._phase*15)%h)
                 p.drawLine(x-5,y,x+5,y)
                 p.drawLine(x,y-5,x,y+5)
         else:
             p.setPen(QPen(QColor("#FFB66D"), 2))
             for i in range(22):
                 x = int(w*(i+.5)/23)
-                y = int(h*(.25+.3*math.sin(i*2.1)**2))
+                y = int((h*(.25+.3*math.sin(i*2.1)**2)-self._phase*12)%h)
                 p.drawLine(x,y,x+4,y-10)
         p.setPen(QColor("#FFFFFF"))
         font = QFont("Segoe UI", 20, QFont.Bold)
