@@ -1,0 +1,57 @@
+{
+  "schema": "nameless-redux-pack-v1",
+  "id": "sakura-dream",
+  "name": "SAKURA DREAM",
+  "version": "0.1.0-concept",
+  "game": {
+    "name": "ROB RUN",
+    "steam_app_id": 4262460
+  },
+  "status": "concept-not-installable",
+  "installation": {
+    "supported": false,
+    "method": null,
+    "requires_official_mod_support": true,
+    "writes_game_files": false
+  },
+  "components": [
+    {
+      "id": "sky",
+      "label": "Soft pink sky",
+      "type": "environment",
+      "status": "design"
+    },
+    {
+      "id": "weapon",
+      "label": "Cherry blossom weapon finishes",
+      "type": "weapon_skins",
+      "status": "design"
+    },
+    {
+      "id": "gunshot",
+      "label": "Gentle weapon audio",
+      "type": "audio",
+      "status": "design"
+    },
+    {
+      "id": "hit-petals",
+      "label": "Cherry blossom hit particles",
+      "type": "particles",
+      "status": "design"
+    }
+  ],
+  "performance": {
+    "profile": "fps-first",
+    "max_particle_count_per_impact": 12,
+    "particle_lifetime_seconds": 0.65,
+    "texture_resolution_target": 1024,
+    "fps_gain_claimed": false,
+    "benchmarked": false
+  },
+  "safety": {
+    "no_anticheat_bypass": true,
+    "no_memory_injection": true,
+    "no_asset_patching": true
+  },
+  "license": "Original art and audio required; do not redistribute ROB RUN assets"
+}
