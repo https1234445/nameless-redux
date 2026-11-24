@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
     QListWidgetItem, QSlider, QComboBox, QCheckBox, QFileDialog, QMessageBox,
-    QLineEdit, QInputDialog, QProgressBar, QScrollArea, QGraphicsOpacityEffect, QColorDialog
+    QLineEdit, QInputDialog, QProgressBar, QScrollArea, QGraphicsOpacityEffect, QGraphicsDropShadowEffect, QColorDialog
 )
 
 try:
@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.9.0-dev"
+VERSION = "3.0.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -698,8 +698,8 @@ class AmbientSurface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._phase = 0.0
-        self.gradient_start = QColor('#493327')
-        self.gradient_end = QColor('#14171B')
+        self.gradient_start = QColor('#7959C8')
+        self.gradient_end = QColor('#235F93')
         self._clock = QTimer(self)
         self._clock.setInterval(50)
         self._clock.timeout.connect(self._tick)
@@ -715,7 +715,7 @@ class AmbientSurface(QWidget):
         import math
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), QColor('#0C0D0F'))
+        painter.fillRect(self.rect(), QColor('#101427'))
         w, h = max(1, self.width()), max(1, self.height())
         for cx, cy, radius, color in [
             (0.87 + 0.045 * math.sin(self._phase), 0.10 + 0.035 * math.cos(self._phase), 0.75, QColor(self.gradient_start.red(), self.gradient_start.green(), self.gradient_start.blue(), 57)),
@@ -762,6 +762,34 @@ class GradientHero(QFrame):
         painter.setPen(QPen(QColor('#594439'), 1))
         painter.drawRoundedRect(rect, 13, 13)
         painter.end()
+
+class GlowButton(QPushButton):
+    """Smooth animated hover glow, including sidebar navigation."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        glow = QGraphicsDropShadowEffect(self)
+        glow.setColor(QColor(159, 128, 255, 175))
+        glow.setBlurRadius(0)
+        glow.setOffset(0, 0)
+        self.setGraphicsEffect(glow)
+        self._glow = QPropertyAnimation(glow, b"blurRadius", self)
+        self._glow.setDuration(190)
+        self._glow.setEasingCurve(QEasingCurve.OutCubic)
+
+    def _animate_glow(self, target):
+        self._glow.stop()
+        self._glow.setStartValue(self.graphicsEffect().blurRadius())
+        self._glow.setEndValue(target)
+        self._glow.start()
+
+    def enterEvent(self, event):
+        self._animate_glow(19)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._animate_glow(0)
+        super().leaveEvent(event)
+
 
 class ReduxCover(QWidget):
     """Locally rendered theme artwork; concept illustration, not gameplay."""
@@ -853,7 +881,7 @@ class ReduxWindow(QMainWindow):
         self.audio_files = [str(p) for p in self.audio_files if isinstance(p, str) and Path(p).is_file()]
         self.profiles = self.read_json_setting("profiles", {})
         self.custom_visual_packs = self.read_json_setting("visual/packs", {})
-        self.theme_colors = self.read_json_setting("theme/colors", {"start": "#493327", "end": "#14171B"})
+        self.theme_colors = self.read_json_setting("theme/colors", {"start": "#7959C8", "end": "#235F93"})
         self.player = None
         self.audio_output = None
         if MULTIMEDIA_AVAILABLE:
@@ -908,7 +936,7 @@ class ReduxWindow(QMainWindow):
                 group.setObjectName("navSection")
                 side.addWidget(group)
                 side.addSpacing(6)
-            btn = QPushButton(f"{glyph}    {name}")
+            btn = GlowButton(f"{glyph}    {name}")
             btn.setObjectName("nav")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked=False, n=name: self.navigate(n))
@@ -1466,11 +1494,13 @@ class ReduxWindow(QMainWindow):
         self.add_page("Settings", page)
 
     def load_initial_screenshot(self):
-        """Respect the user's real gameplay capture before fetching a Steam image."""
-        saved = self.settings.value("preview/screenshot", "")
-        if saved and Path(saved).is_file():
-            if self.effects_preview.set_screenshot(QImage(saved)):
-                self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(saved).name)
+        """Always show an automatic ROB RUN preview; cache it for offline use."""
+        from PySide6.QtCore import QStandardPaths
+        cache_root = QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)
+        self._official_preview_cache = Path(cache_root) / "rob_run_official_preview.png"
+        if self._official_preview_cache.is_file():
+            if self.effects_preview.set_screenshot(QImage(str(self._official_preview_cache))):
+                self.preview_source.setText("ROB RUN • official Steam preview (cached)")
                 return
         self.load_official_screenshot()
 
@@ -1523,7 +1553,12 @@ class ReduxWindow(QMainWindow):
             if not self.effects_preview.set_screenshot(image):
                 raise ValueError("Invalid image")
             self.preview_source.setText(
-                "OFFICIAL ROB RUN SCREENSHOT • Steam / KEFIR • comparison is only a local preview")
+                "ROB RUN • official Steam preview • visual comparison only")
+            try:
+                self._official_preview_cache.parent.mkdir(parents=True, exist_ok=True)
+                image.save(str(self._official_preview_cache), "PNG")
+            except (OSError, AttributeError):
+                pass
         except ValueError as exc:
             self.preview_source.setText("Screenshot unavailable: " + str(exc))
         finally:
@@ -1788,7 +1823,7 @@ class ReduxWindow(QMainWindow):
             note = QLabel("CONCEPT ART / NOT AN INSTALLED GAME MOD")
             note.setObjectName("muted")
             inner.addWidget(note)
-            activate = QPushButton("SELECT REDUX  ↗")
+            activate = GlowButton("SELECT REDUX  ↗")
             activate.setObjectName("primaryAction")
             activate.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
