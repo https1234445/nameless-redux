@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.5.0-dev"
+VERSION = "2.6.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -818,6 +818,7 @@ class ReduxWindow(QMainWindow):
         self.stack.setObjectName("pageStack")
         self.pages = {}
         nav_items = [
+            ("Redux Collection", "✿"),
             ("Overview", "◈"),
             ("Visuals Studio", "◉"),
             ("Theme Lab", "✦"),
@@ -877,11 +878,12 @@ class ReduxWindow(QMainWindow):
         main.addWidget(content, 1)
 
         self.build_pages()
+        self.build_collection()
         self.apply_theme_colors()
         self.apply_style()
         self.load_settings()
         self.restore_audio_list()
-        self.navigate("Overview")
+        self.navigate("Redux Collection")
         self.steam_timer.start()
         QTimer.singleShot(500, self.refresh_steam_status)
         QTimer.singleShot(900, self.load_initial_screenshot)
@@ -1701,6 +1703,60 @@ class ReduxWindow(QMainWindow):
         except (OSError, ValueError, KeyError, TypeError, UnicodeError, zipfile.BadZipFile, json.JSONDecodeError) as exc:
             QMessageBox.warning(self, "Staging failed", str(exc))
 
+    def build_collection(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(18)
+        layout.addLayout(self.heading(
+            "REDUX COLLECTION",
+            "Ready-made aesthetic concepts. Choose one to preview its visual palette."))
+        grid = QGridLayout()
+        grid.setSpacing(14)
+        packs = [
+            ("SAKURA DREAM", "Pink skies / cherry blossoms / soft soundscape", "#E9A3BB", "#704357", "Coral"),
+            ("NEON NIGHT", "Purple neon / electric trails / synth atmosphere", "#A57AF4", "#39255A", "Deep Violet"),
+            ("FROSTBITE", "Icy blue / snow particles / crystalline atmosphere", "#A7E0F0", "#244C67", "Arctic Blue"),
+            ("CRIMSON", "Red sky / ember particles / dramatic soundscape", "#E47E68", "#562A2E", "Sunset"),
+        ]
+        for i, (name, detail, accent, shadow, palette) in enumerate(packs):
+            card, inner = self.card(name, detail)
+            art = QFrame()
+            art.setMinimumHeight(135)
+            art.setStyleSheet(
+                "QFrame { border-radius: 10px; border: 1px solid " + accent +
+                "; background: qlineargradient(x1:0,y1:0,x2:1,y2:1,"
+                "stop:0 " + shadow + ", stop:0.7 " + accent + ", stop:1 #111215); }")
+            art_layout = QVBoxLayout(art)
+            art_layout.addStretch()
+            title = QLabel(name)
+            title.setStyleSheet("color: white; font-size: 23px; font-weight: 800;")
+            art_layout.addWidget(title)
+            inner.insertWidget(0, art)
+            note = QLabel("CONCEPT ART / NOT AN INSTALLED GAME MOD")
+            note.setObjectName("muted")
+            inner.addWidget(note)
+            button = QPushButton("PREVIEW REDUX  ↗")
+            button.setObjectName("primaryAction")
+            button.clicked.connect(
+                lambda checked=False, p=palette, n=name: self.preview_collection_pack(p, n))
+            inner.addWidget(button)
+            grid.addWidget(card, i // 2, i % 2)
+        layout.addLayout(grid)
+        disclaimer = QLabel(
+            "These are design concepts, not downloadable ROB RUN modifications. "
+            "Game installation requires verified supported assets and an approved method.")
+        disclaimer.setObjectName("muted")
+        disclaimer.setWordWrap(True)
+        layout.addWidget(disclaimer)
+        layout.addStretch()
+        self.add_page("Redux Collection", page)
+
+    def preview_collection_pack(self, palette, name):
+        self.palette_combo.setCurrentText(palette)
+        self.navigate("Visuals Studio")
+        self.statusBar().showMessage(
+            name + " selected for preview only; game unchanged", 6000)
+
     def add_page(self, name, page):
         self.pages[name] = page
         self.stack.addWidget(page)
@@ -1743,7 +1799,7 @@ class ReduxWindow(QMainWindow):
             "Game Center": "Steam Connect",
         }.get(name, name))
         self.statusBar().showMessage("WORKSPACE  /  " + name.upper(), 1600)
-        for key in ["overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
+        for key in ["redux_collection", "overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
             btn = getattr(self, "nav_" + key)
             btn.setChecked(btn.text().endswith(name))
         if name == "Overview":
