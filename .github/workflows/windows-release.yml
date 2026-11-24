@@ -1,1 +1,44 @@
+name: Windows release
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pyinstaller PySide6 numpy
+      - name: Build app
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS REDUX" app/nameless_redux.py
+      - name: Build launcher
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS Launcher" launcher.py
+      - name: Package app and checksum
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/NAMELESS REDUX.exe" -DestinationPath "nameless-redux-app.zip"
+          $hash = (Get-FileHash "nameless-redux-app.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  nameless-redux-app.zip" | Set-Content -Encoding ascii "nameless-redux-app.zip.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nameless-redux-windows
+          path: |
+            dist/NAMELESS Launcher.exe
+            nameless-redux-app.zip
+            nameless-redux-app.zip.sha256
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/NAMELESS Launcher.exe
+            nameless-redux-app.zip
+            nameless-redux-app.zip.sha256
 
