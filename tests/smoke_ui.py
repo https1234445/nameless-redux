@@ -39,6 +39,11 @@ for key, value in (("brightness", 30), ("contrast", 145),
 window.effects_preview._move_comparison(window.effects_preview.width() * .75)
 assert 0 <= window.effects_preview.compare_percent <= 100
 assert window.pages["Redux Collection"].verticalScrollBar().value() == 0
+collection_scroll = window.pages["Redux Collection"]
+collection_scroll.verticalScrollBar().setValue(collection_scroll.verticalScrollBar().maximum())
+window.navigate("Overview")
+window.navigate("Redux Collection")
+assert collection_scroll.verticalScrollBar().value() == 0, "page must reopen at top"
 # Every animated component obeys the performance / motion setting.
 from nameless_redux import ShimmerText, AuroraCard, ReduxCover
 window.motion_check.setChecked(False)
