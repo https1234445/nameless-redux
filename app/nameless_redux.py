@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.5.0-rc2"
+VERSION = "3.5.0-rc3"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1705,6 +1705,7 @@ class ReduxWindow(QMainWindow):
             self._last_game_running = False
             self.top_launch_button.setProperty("gameRunning", False)
             self.top_launch_button.setText("▶  LAUNCH GAME")
+            self.top_launch_button.setEnabled(True)
             self.top_launch_button.style().unpolish(self.top_launch_button)
             self.top_launch_button.style().polish(self.top_launch_button)
             return
@@ -1739,6 +1740,8 @@ class ReduxWindow(QMainWindow):
             self.top_launch_button.setText("●  GAME RUNNING" if running else "▶  LAUNCH GAME")
             self.top_launch_button.style().unpolish(self.top_launch_button)
             self.top_launch_button.style().polish(self.top_launch_button)
+        # Do not launch a second instance when the game is already running.
+        self.top_launch_button.setEnabled(not running)
         self.steam_status.setText(
             ("● ROB RUN RUNNING" if running else "● ROB RUN INSTALLED")
             + "  •  " + str(folder))
@@ -2023,8 +2026,10 @@ class ReduxWindow(QMainWindow):
         self.settings.setValue("visual/intensity", 80)
         self.settings.setValue("visual/cool", name == "FROSTBITE")
         self.settings.setValue("collection/active", name)
+        self.settings.sync()
         self.collection_active.setText("ACTIVE NAMELESS LOOK  /  " + name)
         self.update_effects_preview()
+        self.effects_preview.flush_effects()
         QMessageBox.information(
             self, "NAMELESS look activated",
             name + " is active in NAMELESS previews and saved locally.\n\n"
