@@ -65,6 +65,25 @@ try:
     assert window.settings.value("collection/active") == "SAKURA DREAM"
     assert window.effect_sliders["brightness"].value() == 12
     assert window.collection_active.text().endswith("SAKURA DREAM")
+    assert window.effects_preview.filtered != window.effects_preview.base
+    # Export is a safe local manifest; it must not contain a game install path.
+    import json
+    import tempfile
+    from PySide6.QtWidgets import QFileDialog
+    with tempfile.TemporaryDirectory() as tmp:
+        path = str(Path(tmp) / "sakura.json")
+        original_dialog = QFileDialog.getSaveFileName
+        QFileDialog.getSaveFileName = lambda *args, **kwargs: (path, "NAMELESS presets (*.json)")
+        try:
+            window.export_collection_pack("SAKURA DREAM", "Coral")
+        finally:
+            QFileDialog.getSaveFileName = original_dialog
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        assert data["format"] == "nameless-redux-look-v1"
+        assert data["kind"] == "preview-only"
+        assert data["game_files_modified"] is False
+        assert data["effects"]["brightness"] == 12
+        assert "install_path" not in data
 finally:
     QMessageBox.information = original_info
 window.steam_timer.stop()
