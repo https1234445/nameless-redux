@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.6.0-dev"
+VERSION = "2.7.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1740,8 +1740,17 @@ class ReduxWindow(QMainWindow):
             button.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.preview_collection_pack(p, n))
             inner.addWidget(button)
+            activate = QPushButton("ACTIVATE IN NAMELESS")
+            activate.clicked.connect(
+                lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
+            inner.addWidget(activate)
             grid.addWidget(card, i // 2, i % 2)
         layout.addLayout(grid)
+        active = self.settings.value("collection/active", "")
+        self.collection_active = QLabel(
+            "ACTIVE NAMELESS LOOK  /  " + (active or "NONE SELECTED"))
+        self.collection_active.setObjectName("accent")
+        layout.addWidget(self.collection_active)
         disclaimer = QLabel(
             "These are design concepts, not downloadable ROB RUN modifications. "
             "Game installation requires verified supported assets and an approved method.")
@@ -1756,6 +1765,33 @@ class ReduxWindow(QMainWindow):
         self.navigate("Visuals Studio")
         self.statusBar().showMessage(
             name + " selected for preview only; game unchanged", 6000)
+
+    def activate_collection_pack(self, palette, name):
+        """One-click local look; never writes to ROB RUN installation."""
+        self.palette_combo.setCurrentText(palette)
+        self.intensity_slider.setValue(80)
+        self.cool_check.setChecked(name == "FROSTBITE")
+        effects = {
+            "SAKURA DREAM": (12, 104, 115, 28),
+            "NEON NIGHT": (-8, 128, 145, -12),
+            "FROSTBITE": (6, 114, 82, -28),
+            "CRIMSON": (-5, 125, 130, 35),
+        }
+        values = effects.get(name, (0, 100, 100, 0))
+        for key, value in zip(
+                ("brightness", "contrast", "saturation", "warmth"), values):
+            self.effect_sliders[key].setValue(value)
+            self.settings.setValue("effects/" + key, value)
+        self.settings.setValue("visual/palette", palette)
+        self.settings.setValue("visual/intensity", 80)
+        self.settings.setValue("visual/cool", name == "FROSTBITE")
+        self.settings.setValue("collection/active", name)
+        self.collection_active.setText("ACTIVE NAMELESS LOOK  /  " + name)
+        self.update_effects_preview()
+        QMessageBox.information(
+            self, "NAMELESS look activated",
+            name + " is active in NAMELESS previews and saved locally.\n\n"
+            "ROB RUN files, sky, weapons, bullets and sounds have NOT been modified.")
 
     def add_page(self, name, page):
         self.pages[name] = page
