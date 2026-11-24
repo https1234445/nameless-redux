@@ -36,6 +36,24 @@ for key, value in (("brightness", 30), ("contrast", 145),
     window.effects_preview.flush_effects()
     assert window.effects_preview.filtered != original, key
     assert window.effects_preview.base == original, "before must remain original"
+# A custom screenshot survives startup and is not replaced by a pending Steam response.
+import tempfile
+with tempfile.TemporaryDirectory() as preview_dir:
+    preview_file = str(Path(preview_dir) / "rob_run_test.png")
+    assert source.save(preview_file)
+    previous = window.settings.value("preview/screenshot", "")
+    try:
+        window.settings.setValue("preview/screenshot", preview_file)
+        window._preview_request_id = 4
+        window.load_initial_screenshot()
+        assert "rob_run_test.png" in window.preview_source.text()
+        assert window.effects_preview.real_screenshot
+        assert window._preview_request_id == 4
+    finally:
+        if previous:
+            window.settings.setValue("preview/screenshot", previous)
+        else:
+            window.settings.remove("preview/screenshot")
 window.effects_preview._move_comparison(window.effects_preview.width() * .75)
 assert 0 <= window.effects_preview.compare_percent <= 100
 assert window.pages["Redux Collection"].verticalScrollBar().value() == 0
