@@ -41,9 +41,9 @@ The catalog's colored art panels are concept visuals, **not actual gameplay scre
 
 ## Windows build and release
 
-1. Go to **Actions → Windows release → Run workflow** to build a test artifact without publishing a release. The workflow now runs a syntax check and headless Qt UI smoke test before building.
-2. Download the resulting workflow artifact and test `NAMELESS REDUX.exe` on Windows: navigate all nine pages, select/activate/export a look, open Visual Lab, and test Steam Connect.
-3. **Only after testing**, create a GitHub Release with a new higher `v*` tag. The tag triggers the workflow to publish the application ZIP, checksum, and launcher executable.
+1. Every push to `main` now **automatically** runs the Windows build, syntax check, and headless Qt UI smoke test. No manual workflow launch is needed. The result is an Actions artifact, **not** a published release.
+2. Before the first public release, validate the latest green Actions build on Windows: navigate all nine pages, select/activate/export a look, open Visual Lab, and test Steam Connect. Automated UI smoke tests do not replace final real-desktop verification.
+3. **Only after testing**, create a GitHub Release with a new higher `v*` tag. The tag triggers the workflow to publish the application ZIP, checksum, and launcher executable. The `3.5.0-rc1` source version is a release candidate, not a stable game-mod installer.
 4. The existing `NAMELESS Launcher.exe` downloads the newest published release when run. Committing to `main` alone **does not** update installed launcher users.
 
 Do not publish an untested development build as a stable release.
