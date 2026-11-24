@@ -190,7 +190,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "2.8.0-dev"
+VERSION = "2.9.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -763,6 +763,79 @@ class GradientHero(QFrame):
         painter.drawRoundedRect(rect, 13, 13)
         painter.end()
 
+class ReduxCover(QWidget):
+    """Locally rendered theme artwork; concept illustration, not gameplay."""
+    def __init__(self, name, accent, shadow, parent=None):
+        super().__init__(parent)
+        self.name, self.accent, self.shadow = name, QColor(accent), QColor(shadow)
+        self.setMinimumHeight(200)
+
+    def paintEvent(self, event):
+        from PySide6.QtCore import QRectF
+        import math
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        w, h = self.width(), self.height()
+        bg = QLinearGradient(0, 0, w, h)
+        bg.setColorAt(0, self.shadow)
+        bg.setColorAt(.55, self.accent.darker(180))
+        bg.setColorAt(1, QColor("#090F20"))
+        p.setPen(Qt.NoPen)
+        p.setBrush(bg)
+        p.drawRoundedRect(QRectF(0, 0, w, h), 16, 16)
+        glow = QRadialGradient(w*.75, h*.35, h*.7)
+        light = QColor(self.accent)
+        light.setAlpha(180)
+        glow.setColorAt(0, light)
+        light.setAlpha(0)
+        glow.setColorAt(1, light)
+        p.setBrush(glow)
+        p.drawEllipse(QRectF(w*.32, -h*.35, w*.9, h*1.4))
+        # Atmospheric landscape with layered hills and graphic highlights.
+        from PySide6.QtGui import QPolygonF
+        from PySide6.QtCore import QPointF
+        for layer in range(3):
+            shade = QColor(self.shadow).darker(125 + layer*38)
+            p.setBrush(shade)
+            pts = [QPointF(0, h)]
+            for x in range(0, w+22, 18):
+                y = h*(.58 + layer*.12) + math.sin(x/54 + layer*1.7)*14
+                pts.append(QPointF(x, y))
+            pts.append(QPointF(w, h))
+            p.drawPolygon(QPolygonF(pts))
+        if self.name == "SAKURA DREAM":
+            p.setPen(QPen(QColor("#3A233D"), 7))
+            p.drawLine(int(w*.78), h, int(w*.77), int(h*.23))
+            for i in range(12):
+                x = w*(.58 + .032*i)
+                y = h*(.16 + .13*math.sin(i*1.7))
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor("#FFD4EA"))
+                p.drawEllipse(QRectF(x, y, 14, 9))
+        elif self.name == "NEON NIGHT":
+            p.setPen(QPen(QColor("#D8A7FF"), 3))
+            for i in range(7):
+                x = int(w*(.2+i*.11))
+                p.drawLine(x, int(h*.55), int(w*.5+(x-w*.5)*1.7), h)
+        elif self.name == "FROSTBITE":
+            p.setPen(QPen(QColor("#D8F8FF"), 2))
+            for i in range(14):
+                x, y = int(w*(i+.5)/15), int(h*(.14+(i%4)*.12))
+                p.drawLine(x-5,y,x+5,y)
+                p.drawLine(x,y-5,x,y+5)
+        else:
+            p.setPen(QPen(QColor("#FFB66D"), 2))
+            for i in range(22):
+                x = int(w*(i+.5)/23)
+                y = int(h*(.25+.3*math.sin(i*2.1)**2))
+                p.drawLine(x,y,x+4,y-10)
+        p.setPen(QColor("#FFFFFF"))
+        font = QFont("Segoe UI", 20, QFont.Bold)
+        p.setFont(font)
+        p.drawText(20, h-26, self.name)
+        p.end()
+
+
 class ReduxWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -1050,17 +1123,7 @@ class ReduxWindow(QMainWindow):
         self.effects_preview.setMinimumHeight(460)
         self.effects_preview.setObjectName("visualCanvas")
         effects_layout.addWidget(self.effects_preview)
-        screenshot_actions = QHBoxLayout()
-        screenshot_actions.setSpacing(12)
-        for title, handler in [
-            ("LOAD OFFICIAL ROB RUN SCREENSHOT", self.load_official_screenshot),
-            ("CHOOSE MY ROB RUN SCREENSHOT", self.choose_preview_screenshot),
-        ]:
-            btn = QPushButton(title)
-            btn.clicked.connect(handler)
-            screenshot_actions.addWidget(btn)
-        effects_layout.addLayout(screenshot_actions)
-        self.preview_source = QLabel("Loading real ROB RUN imagery • Steam screenshot or your own F12 capture")
+        self.preview_source = QLabel("ROB RUN • automatic official Steam preview")
         self.preview_source.setObjectName("previewSource")
         self.preview_source.setWordWrap(True)
         effects_layout.addWidget(self.preview_source)
@@ -1720,34 +1783,16 @@ class ReduxWindow(QMainWindow):
         ]
         for i, (name, detail, accent, shadow, palette) in enumerate(packs):
             card, inner = self.card(name, detail)
-            art = QFrame()
-            art.setMinimumHeight(135)
-            art.setStyleSheet(
-                "QFrame { border-radius: 10px; border: 1px solid " + accent +
-                "; background: qlineargradient(x1:0,y1:0,x2:1,y2:1,"
-                "stop:0 " + shadow + ", stop:0.7 " + accent + ", stop:1 #111215); }")
-            art_layout = QVBoxLayout(art)
-            art_layout.addStretch()
-            title = QLabel(name)
-            title.setStyleSheet("color: white; font-size: 23px; font-weight: 800;")
-            art_layout.addWidget(title)
+            art = ReduxCover(name, accent, shadow)
             inner.insertWidget(0, art)
             note = QLabel("CONCEPT ART / NOT AN INSTALLED GAME MOD")
             note.setObjectName("muted")
             inner.addWidget(note)
-            button = QPushButton("PREVIEW REDUX  ↗")
-            button.setObjectName("primaryAction")
-            button.clicked.connect(
-                lambda checked=False, p=palette, n=name: self.preview_collection_pack(p, n))
-            inner.addWidget(button)
-            activate = QPushButton("ACTIVATE IN NAMELESS")
+            activate = QPushButton("SELECT REDUX  ↗")
+            activate.setObjectName("primaryAction")
             activate.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
             inner.addWidget(activate)
-            export = QPushButton("EXPORT LOOK  ↓")
-            export.clicked.connect(
-                lambda checked=False, n=name, p=palette: self.export_collection_pack(n, p))
-            inner.addWidget(export)
             grid.addWidget(card, i // 2, i % 2)
         layout.addLayout(grid)
         active = self.settings.value("collection/active", "")
@@ -2435,11 +2480,11 @@ class ReduxWindow(QMainWindow):
             QMainWindow, QWidget, QWidget#root, QWidget#pageStack, QStackedWidget,
             QScrollArea, QScrollArea#oceanScroll, QWidget#oceanViewport,
             QScrollArea > QWidget > QWidget {
-                background-color: #0C0D0F; color: #F1F0EC;
+                background-color: #101427; color: #F4F5FF;
                 font-family: 'Segoe UI'; font-size: 12px;
             }
             QWidget#contentSurface { background: transparent; }
-            QFrame#sidebar { background: #111215; border-right: 1px solid #2C2D31; }
+            QFrame#sidebar { background: #161A34; border-right: 1px solid #394276; }
             QLabel { background: transparent; color: #F1F0EC; }
             QLabel#navSection {
                 color: #77777D; font-size: 9px; font-weight: 700;
@@ -2451,11 +2496,12 @@ class ReduxWindow(QMainWindow):
                 border-radius: 12px;
             }
             QPushButton#primaryAction {
-                background: #E6A16D; color: #171412;
-                border: 1px solid #E6A16D; font-weight: 800;
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #9E83FF,stop:.55 #E9A0EA,stop:1 #76D8F9);
+                color: #141329; border: 1px solid #D8BAFF; font-weight: 900;
             }
             QPushButton#primaryAction:hover {
-                background: #F4B98A; border-color: #F4B98A;
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #C3ADFF,stop:1 #A0ECFF);
+                border-color: #FFFFFF;
             }
             QLabel#brand { color: #FAF8F3; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
             QLabel#subbrand { color: #E99C62; font-size: 9px; letter-spacing: 1px; }
@@ -2481,22 +2527,22 @@ class ReduxWindow(QMainWindow):
             }
             QFrame#heroCard { background: transparent; border: 0px; }
             QPushButton#nav {
-                background: transparent; color: #9D9DA2; text-align: left;
-                padding: 14px 15px; border: 0; border-radius: 8px;
-                font-size: 12px; font-weight: 500;
+                background: transparent; color: #C4C6E6; text-align: left;
+                padding: 14px 15px; border: 0; border-radius: 10px;
+                font-size: 12px; font-weight: 800;
             }
-            QPushButton#nav:hover { background: #202125; color: #F4F2EF; }
+            QPushButton#nav:hover { background: #353A70; color: #FFFFFF; }
             QPushButton#nav:checked {
-                background: #292521; color: #FFF1E4;
-                border-left: 3px solid #F0A66D; font-weight: 700;
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #564D9C,stop:1 #2C416D);
+                color: #FFFFFF; border-left: 3px solid #C7A7FF; font-weight: 900;
             }
             QPushButton {
-                background-color: #292A2E; color: #F4F2EF;
-                border: 1px solid #44454A; border-radius: 8px;
-                padding: 11px 16px; font-size: 11px; font-weight: 700;
+                background-color: #30385C; color: #FFFFFF;
+                border: 1px solid #6371A5; border-radius: 10px;
+                padding: 11px 16px; font-size: 12px; font-weight: 900;
             }
-            QPushButton:hover { background-color: #38322D; border-color: #E6A16D; }
-            QPushButton:pressed { background-color: #5B3B29; }
+            QPushButton:hover { background-color: #5559A0; border-color: #BDA5FF; }
+            QPushButton:pressed { background-color: #765DB3; }
             QPushButton:disabled { color: #77777A; background: #1D1E21; border-color: #303136; }
             QComboBox, QLineEdit, QListWidget {
                 background-color: #111215; color: #F0EEEB;
@@ -2523,9 +2569,9 @@ class ReduxWindow(QMainWindow):
             }
             QProgressBar::chunk { background: #D99565; border-radius: 4px; }
             QStatusBar { background-color: #111215; color: #D5A27F; }
-            QScrollBar:vertical { background: #111215; width: 8px; margin: 0; }
-            QScrollBar::handle:vertical { background: #4B4C51; border-radius: 4px; min-height: 30px; }
-            QScrollBar::handle:vertical:hover { background: #8C6C55; }
+            QScrollBar:vertical { background: transparent; width: 5px; margin: 3px 0; }
+            QScrollBar::handle:vertical { background: #6B6AA0; border-radius: 2px; min-height: 42px; }
+            QScrollBar::handle:vertical:hover { background: #C3AAFF; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QToolTip {
                 background: #25262A; color: #FAF7F2;
