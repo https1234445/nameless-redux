@@ -48,7 +48,7 @@ with tempfile.TemporaryDirectory() as preview_dir:
         window.load_initial_screenshot()
         assert "rob_run_test.png" in window.preview_source.text()
         assert window.effects_preview.real_screenshot
-        assert window._preview_request_id == 4
+        assert window._preview_request_id == 5, "restoring a local image invalidates pending Steam replies"
     finally:
         if previous:
             window.settings.setValue("preview/screenshot", previous)
