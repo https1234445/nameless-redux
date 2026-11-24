@@ -345,7 +345,7 @@ def find_steam_game():
     if os.name == "nt":
         try:
             import winreg
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\\Valve\\Steam") as key:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as key:
                 roots.append(Path(winreg.QueryValueEx(key, "SteamPath")[0]))
         except (OSError, ValueError):
             pass
@@ -360,7 +360,7 @@ def find_steam_game():
         if vdf.is_file():
             try:
                 text = vdf.read_text(encoding="utf-8-sig", errors="replace")
-                for folder in re.findall(r'"path"\\s*"([^"]+)"', text, re.I):
+                for folder in re.findall(r'"path"\s*"([^"]+)"', text, re.I):
                     libraries.append(Path(folder.replace("\\\\", "\\")) / "steamapps")
             except OSError:
                 pass
@@ -370,7 +370,7 @@ def find_steam_game():
                 continue
             try:
                 data = manifest.read_text(encoding="utf-8-sig", errors="replace")
-                match = re.search(r'"installdir"\\s*"([^"]+)"', data, re.I)
+                match = re.search(r'"installdir"\s*"([^"]+)"', data, re.I)
                 if match:
                     location = library / "common" / match.group(1)
                     if location.is_dir():
