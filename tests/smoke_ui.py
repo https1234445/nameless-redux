@@ -14,6 +14,12 @@ app = QApplication([])
 window = ReduxWindow()
 assert window.stack.count() == 10, "All ten workspace pages must exist"
 assert window.stack.currentWidget() is window.pages["Overview"], "Home must be the startup page"
+from nameless_redux import HomeFeatureButton
+home_buttons = window.pages["Overview"].findChildren(HomeFeatureButton)
+assert len(home_buttons) == 4, "Home needs four real, clickable Qt feature cards"
+assert all(not button.preview.isNull() for button in home_buttons), "Home artwork must be bundled"
+assert window.exact_home is None, "Home must never depend on a screenshot overlay"
+
 for name in ("World Reborn", "Redux Collection", "Overview", "Visuals Studio", "Theme Lab", "Sound Library",
              "Crosshair Studio", "Profiles", "Game Center", "Settings"):
     window.navigate(name)
