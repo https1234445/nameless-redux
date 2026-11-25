@@ -45,8 +45,15 @@ window.navigate("World Reborn")
 window.navigate("Visuals Studio")
 window.effect_sliders["brightness"].setValue(17)
 assert window.effects_preview._render_timer.isActive(), "Slider must debounce processing"
+window.compare_check.setChecked(True)
+window.effect_sliders["brightness"].setValue(50)
+assert window.compare_slider.value() == 100, "Grading slider should move comparison divider"
+window.effect_sliders["brightness"].setValue(-50)
+assert window.compare_slider.value() == 0, "Divider should follow normalized grading value"
 window.compare_check.setChecked(False)
+previous_split = window.compare_slider.value()
 window.effect_sliders["contrast"].setValue(122)
+assert window.compare_slider.value() == previous_split, "Disabled comparison must not move"
 assert not window.compare_check.isChecked(), "Editing effects must never reactivate comparison"
 assert not window.effects_preview.compare_enabled
 window.compare_check.setChecked(True)
