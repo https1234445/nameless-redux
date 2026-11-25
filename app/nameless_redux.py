@@ -16,6 +16,7 @@ from redux_showroom import ReduxShowroom
 from redux_armory import CosmeticGarage
 from premium_hero import PremiumHero
 from redux_atlas import CosmeticAtlas
+from fps_lab import FPSLab
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -194,7 +195,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.12.0-dev"
+VERSION = "3.13.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1496,6 +1497,14 @@ class ReduxWindow(QMainWindow):
         l = QVBoxLayout(page)
         l.setSpacing(14)
         l.addLayout(self.heading("GAME CENTER", "Steam Connect • ROB RUN / App ID 4262460 • safe read-only detection"))
+        fps_card, fps_layout = self.card(
+            "FPS LAB  /  PERFORMANCE STUDIO",
+            "Read-only hardware check, three optimization guides and honest FPS comparisons.")
+        fps_open = QPushButton("OPEN FPS LAB  /  HELP LOW-END PCs")
+        fps_open.clicked.connect(self.open_fps_lab)
+        fps_layout.addWidget(fps_open)
+        l.addWidget(fps_card)
+
         steam_card, steam_layout = self.card("STEAM CONNECT  /  LIVE", "Find the installed game and launch it through Steam. No injection or game file modification.")
         self.steam_status = QLabel("Checking Steam installation…")
         self.steam_status.setObjectName("accent")
@@ -2097,6 +2106,10 @@ class ReduxWindow(QMainWindow):
             QTimer.singleShot(0, lambda: self.open_cosmetic_garage(pack, slot))
 
         CosmeticAtlas(self, on_select=open_selected).exec()
+
+    def open_fps_lab(self):
+        """Launch safe performance guidance without changing game or Windows settings."""
+        FPSLab(self).exec()
 
     def open_cosmetic_garage(self, name="SAKURA DREAM", slot=None):
         """Open original cosmetic loadout studio; no ROB RUN asset modification."""
