@@ -21,7 +21,18 @@ assert selected == [("CRIMSON", "mask")]
 image = render_atlas()
 assert image.width() == 2400 and image.height() == 2920
 assert not image.isNull()
-assert image.pixelColor(900, 700) != image.pixelColor(0, 0)
+# Sample the whole poster rather than assuming a particular pixel is artwork.
+# On headless Windows, text metrics and thumbnail placement can vary.
+background = image.pixelColor(0, 0).rgba()
+sampled_colors = {
+    image.pixelColor(x, y).rgba()
+    for y in range(40, image.height(), 35)
+    for x in range(40, image.width(), 35)
+}
+assert background in sampled_colors
+assert len(sampled_colors) >= 3, (
+    "Atlas poster appears blank or lacks rendered concept content"
+)
 atlas.close()
 app.quit()
 print("REDUX atlas smoke: 20 concepts, selection and high-resolution poster OK")
