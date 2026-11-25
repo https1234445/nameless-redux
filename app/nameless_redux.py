@@ -1,3 +1,4 @@
+from ui_controls import ClickOnlyComboBox
 import sys
 import json
 import hashlib
@@ -1240,7 +1241,7 @@ class ReduxWindow(QMainWindow):
         l = QVBoxLayout(page)
         l.addLayout(self.heading("VISUAL LAB", "Live color controls and real ROB RUN screenshot comparisons."))
         c, cl = self.card("COLOR PRESET", "Choose a base palette.")
-        self.palette_combo = QComboBox()
+        self.palette_combo = ClickOnlyComboBox()
         self.palette_combo.setMinimumHeight(40)
         self.palette_combo.addItems(PRESETS.keys())
         cl.addWidget(self.palette_combo)
@@ -1303,7 +1304,7 @@ class ReduxWindow(QMainWindow):
         effects_layout.addLayout(compare_row)
         self.compare_slider = self.add_slider(effects_layout, "BEFORE / AFTER SPLIT", 0, 100, 50)
         self.compare_slider.valueChanged.connect(self.update_compare)
-        self.effect_preset = QComboBox()
+        self.effect_preset = ClickOnlyComboBox()
         self.effect_preset.addItems(EFFECT_PRESETS.keys())
         effects_layout.addWidget(QLabel("CINEMATIC EFFECT PRESET"))
         effects_layout.addWidget(self.effect_preset)
@@ -1429,9 +1430,9 @@ class ReduxWindow(QMainWindow):
         pl.addWidget(self.cross_preview)
         grid.addWidget(preview_card, 0, 0, 2, 1)
         controls, cl = self.card("DESIGN CONTROLS")
-        self.cross_style = QComboBox()
+        self.cross_style = ClickOnlyComboBox()
         self.cross_style.addItems(["Classic", "Cross", "Dot", "Circle"])
-        self.cross_color = QComboBox()
+        self.cross_color = ClickOnlyComboBox()
         self.cross_color.addItems(CROSSHAIR_COLORS.keys())
         cl.addWidget(QLabel("STYLE"))
         cl.addWidget(self.cross_style)
