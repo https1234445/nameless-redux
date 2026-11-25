@@ -57,7 +57,7 @@ class ArtLabel(QLabel):
 
 class WorldReborn(QWidget):
     """Reference-inspired collection screen. All actions remain NAMELESS-only."""
-    open_collection = Signal()
+    open_collection = Signal(str)
     open_visual_lab = Signal()
     open_cosmetics = Signal(str)
     apply_look = Signal(str)
@@ -163,7 +163,7 @@ class WorldReborn(QWidget):
         hl.addLayout(actions)
         preview=QPushButton("▷  PREVIEW HERE")
         preview.setObjectName("worldPrimary")
-        preview.clicked.connect(self.open_collection.emit)
+        preview.clicked.connect(lambda checked=False: self.open_collection.emit(PACKS[self.pack][0]))
         actions.addWidget(preview,2)
         cosmetics=QPushButton("COSMETICS")
         cosmetics.clicked.connect(lambda:self.open_cosmetics.emit(PACKS[self.pack][0]))
