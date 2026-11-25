@@ -19,6 +19,7 @@ from redux_showroom import ReduxShowroom
 from redux_armory import CosmeticGarage, CosmeticCanvas, COSMETIC_TITLES
 from premium_hero import PremiumHero
 from redux_atlas import CosmeticAtlas
+from world_reborn import WorldReborn
 from fps_lab import FPSLab
 from ping_lab import PingLab
 from PySide6.QtWidgets import (
@@ -1082,7 +1083,8 @@ class ReduxWindow(QMainWindow):
         self.stack.setObjectName("pageStack")
         self.pages = {}
         nav_items = [
-            ("Redux Collection", "✿"),
+            ("World Reborn", "✿"),
+            ("Redux Collection", "◇"),
             ("Overview", "◈"),
             ("Visuals Studio", "◉"),
             ("Theme Lab", "✦"),
@@ -1150,7 +1152,7 @@ class ReduxWindow(QMainWindow):
         self.apply_style()
         self.load_settings()
         self.restore_audio_list()
-        self.navigate("Redux Collection")
+        self.navigate("World Reborn")
         self.steam_timer.start()
         QTimer.singleShot(500, self.refresh_steam_status)
         QTimer.singleShot(900, self.load_initial_screenshot)
@@ -1205,6 +1207,14 @@ class ReduxWindow(QMainWindow):
         return box
 
     def build_pages(self):
+        world = WorldReborn()
+        world.open_collection.connect(lambda: self.navigate("Redux Collection"))
+        world.open_visual_lab.connect(lambda: self.navigate("Visuals Studio"))
+        world.open_cosmetics.connect(lambda name: self.open_cosmetic_garage(name))
+        world.apply_look.connect(lambda name: self.activate_collection_pack(
+            {"SAKURA DREAM":"Coral", "NEON NIGHT":"Deep Violet",
+             "FROSTBITE":"Arctic Blue", "CRIMSON":"Sunset"}[name], name))
+        self.add_page("World Reborn", world)
         # Overview
         page = QWidget()
         l = QVBoxLayout(page)
