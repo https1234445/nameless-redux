@@ -1111,6 +1111,19 @@ class ReduxWindow(QMainWindow):
             setattr(self, "nav_" + name.lower().replace(" ", "_"), btn)
 
         side.addStretch()
+        # Scenic lower sidebar art uses the same replaceable REDUX artwork as the
+        # collection; importing a custom art pack updates it on next launch.
+        from world_reborn import art as world_art
+        sidebar_art = world_art("sakura_dream.jpg")
+        if not sidebar_art.isNull():
+            scenic = QLabel()
+            scenic.setObjectName("sidebarScenic")
+            scenic.setPixmap(QPixmap.fromImage(sidebar_art).scaled(
+                192, 235, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+            scenic.setFixedHeight(235)
+            scenic.setAlignment(Qt.AlignCenter)
+            scenic.setScaledContents(False)
+            side.addWidget(scenic)
         version = QLabel(f"NAMELESS REDUX / {VERSION}\nROB RUN EDITION")
         version.setObjectName("version")
         side.addWidget(version)
