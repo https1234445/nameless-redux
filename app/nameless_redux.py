@@ -2068,7 +2068,7 @@ class ReduxWindow(QMainWindow):
     def build_collection(self):
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setSpacing(18)
+        layout.setSpacing(12)
         layout.addLayout(self.heading(
             "REDUX COLLECTION",
             "Four original worlds • 20 cosmetic concepts • mix-and-match garage • performance-first design."))
@@ -2081,7 +2081,9 @@ class ReduxWindow(QMainWindow):
         import_art_button = QPushButton("IMPORT REALISTIC REDUX ART PACK  /  ZIP")
         import_art_button.setObjectName("primaryAction")
         import_art_button.clicked.connect(self.install_redux_art_pack)
-        layout.addWidget(import_art_button)
+        # Art import remains available under Settings; the collection itself
+        # should look like a showroom rather than an installation utility.
+        import_art_button.setVisible(False)
         showroom_intro = QHBoxLayout()
         showroom_button = GlowButton("OPEN INTERACTIVE REDUX SHOWROOM   ↗")
         showroom_button.setObjectName("primaryAction")
@@ -2097,10 +2099,11 @@ class ReduxWindow(QMainWindow):
             lambda checked=False: self.open_redux_atlas())
         showroom_intro.addWidget(atlas_button)
         showroom_intro.addStretch()
-        layout.addLayout(showroom_intro)
+        # Advanced tools remain available through the main navigation.
         # Cinematic gallery: four themes alongside a live selected concept.
         gallery = QHBoxLayout()
-        gallery.setSpacing(12)
+        gallery.setSpacing(16)
+        self.gallery_cards = {}
         cards_column = QVBoxLayout()
         grid = QGridLayout()
         grid.setSpacing(10)
@@ -2119,17 +2122,19 @@ class ReduxWindow(QMainWindow):
         for i, (name, detail, accent, shadow, palette) in enumerate(packs):
             card, inner = self.card(name)
             card.setObjectName("reduxCollectionCard")
-            inner.setContentsMargins(16, 16, 16, 18)
-            inner.setSpacing(10)
+            inner.setContentsMargins(10, 10, 10, 10)
+            inner.setSpacing(6)
             art = ReduxCover(name, accent, shadow)
-            art.setMinimumHeight(160)
+            art.setMinimumHeight(190)
             inner.insertWidget(0, art)
             number, tagline, mood = pack_features[name]
             edition = QLabel(number + "   /   ORIGINAL REDUX CONCEPT")
             edition.setObjectName("collectionEyebrow")
+            edition.setVisible(False)
             inner.insertWidget(1, edition)
             headline = QLabel(tagline)
             headline.setObjectName("collectionHeadline")
+            headline.setVisible(False)
             inner.insertWidget(2, headline)
             mood_label = QLabel(mood)
             mood_label.setObjectName("collectionMood")
@@ -2137,6 +2142,7 @@ class ReduxWindow(QMainWindow):
             inner.addWidget(mood_label)
             collection_stats = QLabel("01 WORLD   /   05 COSMETIC CATEGORIES   /   LIVE PREVIEW")
             collection_stats.setObjectName("collectionEyebrow")
+            collection_stats.setVisible(False)
             inner.addWidget(collection_stats)
 
             actions = QHBoxLayout()
@@ -2157,15 +2163,18 @@ class ReduxWindow(QMainWindow):
             activate.setToolTip("Only changes local NAMELESS previews; ROB RUN stays untouched.")
             activate.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
+            activate.setVisible(False)
             inner.addWidget(activate)
             compatibility = QLabel(
                 "CONCEPT ONLY   •   GAME INSTALL NOT AVAILABLE   •   NO GAME FILES CHANGED")
             compatibility.setObjectName("collectionDisclaimer")
             compatibility.setWordWrap(True)
+            compatibility.setVisible(False)
             inner.addWidget(compatibility)
+            self.gallery_cards[name] = card
             grid.addWidget(card, i // 2, i % 2)
         cards_column.addLayout(grid)
-        gallery.addLayout(cards_column, 3)
+        gallery.addLayout(cards_column, 2)
 
         detail = QFrame()
         detail.setObjectName("reduxCollectionCard")
@@ -2210,7 +2219,7 @@ class ReduxWindow(QMainWindow):
             lambda: self.open_cosmetic_garage(self.gallery_pack,
                                              self.gallery_slot))
         detail_layout.addWidget(open_selected)
-        gallery.addWidget(detail, 2)
+        gallery.addWidget(detail, 3)
         self.gallery_pack = "SAKURA DREAM"
         self.gallery_slot = "vehicle"
         self.select_gallery_pack("SAKURA DREAM")
@@ -2262,6 +2271,18 @@ class ReduxWindow(QMainWindow):
             return
         self.gallery_pack = pack
         self.select_gallery_slot(self.gallery_slot)
+        for name, card in self.gallery_cards.items():
+            selected = name == pack
+            card.setStyleSheet(
+                "QFrame#reduxCollectionCard {"
+                "background: #141224;"
+                "border: 2px solid " +
+                ("#F08BDE" if selected else "#4B405F") +
+                "; border-radius: 14px; }")
+        self.gallery_title.setStyleSheet(
+            "font-size: 23px; font-weight: 900; color: " +
+            {"SAKURA DREAM": "#F5B6D8", "NEON NIGHT": "#C59BFF",
+             "FROSTBITE": "#A5D8FF", "CRIMSON": "#FF9C9C"}[pack] + ";")
 
     def select_gallery_slot(self, slot):
         if slot not in COSMETIC_TITLES[self.gallery_pack]:
