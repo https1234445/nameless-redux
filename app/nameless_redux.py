@@ -1947,7 +1947,7 @@ class ReduxWindow(QMainWindow):
         pack_card, pack_layout = self.card(
             "REDUX PACK MANAGER", "Inspect ZIP packs, verify SHA-256 checksums and stage assets outside the game. Game files are never patched.")
         pack_buttons = QHBoxLayout()
-        for label, callback in [("OPEN PACK", self.open_redux_pack), ("STAGE PACK", self.stage_selected_pack)]:
+        for label, callback in [("OPEN PACK", self.open_redux_pack), ("STAGE PACK", self.stage_selected_pack), ("LAUNCH ROB RUN VIA STEAM", self.launch_steam_game)]:
             button = QPushButton(label)
             button.clicked.connect(callback)
             pack_buttons.addWidget(button)
@@ -2146,7 +2146,18 @@ class ReduxWindow(QMainWindow):
         self.top_game_status.setStyleSheet("color:#36E48D;")
 
     def launch_steam_game(self):
+        """Launch original Steam game; staged Redux artwork is not installed."""
         import webbrowser
+        if getattr(self, "redux_pack_path", None):
+            reply = QMessageBox.question(
+                self, "Sakura Dream is not installed",
+                "The selected Redux pack is staged artwork only. ROB RUN will launch "
+                "normally via Steam with Easy Anti-Cheat; custom sky, weapons, "
+                "vehicles, audio and VFX will NOT appear in-game.\n\n"
+                "Launch the original game anyway?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply != QMessageBox.Yes:
+                return
         webbrowser.open("steam://rungameid/" + STEAM_APP_ID)
 
     def choose_game_folder(self):
