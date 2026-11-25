@@ -1685,7 +1685,18 @@ class ReduxWindow(QMainWindow):
             if self.effects_preview.set_screenshot(image):
                 self._preview_request_id = getattr(self, "_preview_request_id", 0) + 1
                 self.preview_source.setText("YOUR ROB RUN SCREENSHOT • " + Path(filename).name)
-                self.settings.setValue("preview/screenshot", filename)
+                # Persist a private local copy so moving/deleting Downloads won't
+                # silently restore the unrelated vector placeholder.
+                from PySide6.QtCore import QStandardPaths
+                cache = Path(QStandardPaths.writableLocation(
+                    QStandardPaths.AppLocalDataLocation)) / "user_rob_run_preview.png"
+                try:
+                    cache.parent.mkdir(parents=True, exist_ok=True)
+                    if not image.save(str(cache), "PNG"):
+                        raise OSError("Could not save screenshot")
+                    self.settings.setValue("preview/screenshot", str(cache))
+                except OSError:
+                    self.settings.setValue("preview/screenshot", filename)
             else:
                 QMessageBox.warning(self, "Image error", "Could not open the screenshot.")
 
