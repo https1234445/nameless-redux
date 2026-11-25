@@ -73,6 +73,11 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: python tests/art_pack_smoke.py
+      - name: Verify all cinematic images are embedded before release
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python tests/bundled_art_smoke.py
       - name: Build app
         shell: pwsh
         run: |
