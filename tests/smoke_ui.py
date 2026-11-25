@@ -200,6 +200,16 @@ try:
 finally:
     QMessageBox.question = original_question
     window.load_initial_screenshot = original_load
+# Produce a real Qt screenshot on Windows for release visual inspection.
+window.navigate("World Reborn")
+window.resize(1672, 941)
+window.show()
+app.processEvents()
+capture_dir = Path("release-preview")
+capture_dir.mkdir(exist_ok=True)
+capture_path = capture_dir / "nemelis-world-reborn.png"
+assert window.grab().save(str(capture_path)), "Failed to capture Windows interface"
+assert capture_path.stat().st_size > 10000, "Windows interface screenshot is empty"
 window.steam_timer.stop()
 window.close()
 QTimer.singleShot(0, app.quit)
