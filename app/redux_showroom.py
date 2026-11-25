@@ -4,6 +4,7 @@ Every pixel and sound here is generated locally. Nothing accesses ROB RUN files,
 processes, memory, networking or anti-cheat. This is NOT an in-game mod.
 """
 from __future__ import annotations
+from ui_controls import ClickOnlyComboBox
 
 import io
 import math
@@ -436,7 +437,7 @@ class ReduxShowroom(QDialog):
         title.setObjectName("showroomTitle")
         header.addWidget(title)
         header.addStretch()
-        self.pack_select = QComboBox()
+        self.pack_select = ClickOnlyComboBox()
         self.pack_select.setObjectName("showroomPackSelect")
         self.pack_select.addItems(list(PACKS))
         header.addWidget(self.pack_select)
