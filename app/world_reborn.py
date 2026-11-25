@@ -8,7 +8,6 @@ from PySide6.QtGui import QColor, QImage, QPixmap
 from PySide6.QtWidgets import (QWidget, QLabel, QFrame, QPushButton, QVBoxLayout,
     QHBoxLayout, QGridLayout, QSlider, QScrollArea, QGraphicsDropShadowEffect)
 from art_pack import art_candidates
-from world_split import SplitPreview
 
 PACKS = [
     ("SAKURA DREAM", "Spring vibes, soft light and cherry petals.", "sakura_dream.jpg", "#F58ACA"),
@@ -170,54 +169,8 @@ class WorldReborn(QWidget):
         disclaimer.setObjectName("worldMuted")
         hl.addWidget(disclaimer)
 
-        bottom=QFrame()
-        bottom.setObjectName("worldPanel")
-        root.addWidget(bottom,2)
-        bl=QVBoxLayout(bottom)
-        bl.setContentsMargins(12,12,12,12)
-        bl.setSpacing(10)
-        header=QHBoxLayout()
-        bl.addLayout(header)
-        visual=QLabel("☷  Visual Lab")
-        visual.setObjectName("worldHeading")
-        header.addWidget(visual)
-        intro=QLabel("Tune the look. See the difference.")
-        intro.setObjectName("worldMuted")
-        header.addWidget(intro)
-        header.addStretch()
-        full=QPushButton("OPEN FULL VISUAL LAB")
-        full.clicked.connect(self.open_visual_lab.emit)
-        header.addWidget(full)
-        comparison=QHBoxLayout()
-        comparison.setSpacing(14)
-        bl.addLayout(comparison)
-        self.split=SplitPreview()
-        comparison.addWidget(self.split,7)
-        control_frame=QFrame()
-        control_frame.setObjectName("worldPanel")
-        comparison.addWidget(control_frame,4)
-        controls=QVBoxLayout(control_frame)
-        controls.setContentsMargins(12,10,12,10)
-        for key,minimum,maximum,default in (
-            ("Brightness",-100,100,18),("Contrast",-100,100,24),
-            ("Saturation",-100,100,37),("Temperature",-100,100,12)):
-            line=QHBoxLayout()
-            controls.addLayout(line)
-            text=QLabel(key)
-            text.setMinimumWidth(86)
-            line.addWidget(text)
-            slider=QSlider(Qt.Horizontal)
-            slider.setRange(minimum,maximum)
-            slider.setValue(default)
-            slider.valueChanged.connect(self.update_after)
-            line.addWidget(slider,1)
-            val=QLabel(f"{default:+d}")
-            val.setMinimumWidth(34)
-            line.addWidget(val)
-            self.controls[key]=(slider,val)
-        self.source=art("rob_run_preview.jpg")
-        if self.source.isNull():
-            self.source=art("sakura_dream.jpg")
+        # Visual Lab is a separate workspace page, not embedded in World Reborn.
+        # This also avoids costly synchronous image processing on the landing page.
         self.select_pack(0)
         self.update_after()
 
@@ -248,25 +201,3 @@ class WorldReborn(QWidget):
         for i,b in enumerate(self.angle_buttons):
             b.setStyleSheet("border:2px solid #FF8BD6;background:#532449;" if i==index else "")
 
-    def update_after(self,*_):
-        if self.source.isNull():
-            return
-        values={key:slider.value() for key,(slider,label) in self.controls.items()}
-        for key,(slider,label) in self.controls.items():
-            label.setText(f"{slider.value():+d}")
-        img=self.source.scaled(480,270,Qt.KeepAspectRatio,Qt.SmoothTransformation).convertToFormat(QImage.Format_RGB32)
-        bright=values["Brightness"]*1.25
-        contrast=1+values["Contrast"]/150
-        saturation=max(0,1+values["Saturation"]/100)
-        temp=values["Temperature"]*.45
-        for y in range(img.height()):
-            for x in range(img.width()):
-                p=QColor(img.pixel(x,y))
-                rr,gg,bb=p.red(),p.green(),p.blue()
-                gray=.2126*rr+.7152*gg+.0722*bb
-                rr=(gray+(rr-gray)*saturation-127)*contrast+127+bright+temp
-                gg=(gray+(gg-gray)*saturation-127)*contrast+127+bright
-                bb=(gray+(bb-gray)*saturation-127)*contrast+127+bright-temp
-                img.setPixelColor(x,y,QColor(max(0,min(255,int(rr))),
-                    max(0,min(255,int(gg))),max(0,min(255,int(bb)))))
-        self.split.set_images(self.source,img)
