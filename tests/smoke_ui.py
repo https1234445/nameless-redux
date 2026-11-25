@@ -22,6 +22,16 @@ assert window.pages["World Reborn"].hero_title.text() == "SAKURA DREAM"
 # Release gate: the collection must not contain the heavy Visual Lab.
 world = window.pages["World Reborn"]
 assert not hasattr(world, "split"), "Visual Lab must be separate from World Reborn"
+assert len(window.secondary_nav) == 5, "Keep extra tools available but collapsed"
+assert all(button.isHidden() for button in window.secondary_nav), "Reference sidebar must show only five main destinations"
+window.more_tools_button.click()
+assert all(not button.isHidden() for button in window.secondary_nav)
+window.more_tools_button.click()
+assert all(button.isHidden() for button in window.secondary_nav)
+assert window.main_header.isHidden(), "World Reborn must have one clean top navigation row"
+window.navigate("Visuals Studio")
+assert not window.main_header.isHidden(), "Other workspace tools retain their header"
+window.navigate("World Reborn")
 assert len(world.angle_buttons) == 5
 assert all(not button.icon().isNull() for button in world.angle_buttons), "Missing car thumbnails"
 # All reference-style top tabs navigate to their real workspace pages.
