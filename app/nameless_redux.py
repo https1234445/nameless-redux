@@ -1185,8 +1185,12 @@ class ReduxWindow(QMainWindow):
         # No opaque photo tile: labels and navigation float over the sky.
         from world_reborn import art as world_art
         # Sidebar uses its own reference artwork, never the Sakura world cover.
-        sidebar_reference = Path(__file__).resolve().parent / "assets" / "sidebar_reference.png"
-        sidebar.set_artwork(QImage(str(sidebar_reference)) if sidebar_reference.is_file()
+        sidebar_reference = next((p for p in (
+            Path(sys.executable).resolve().parent / "sidebar_reference.png",
+            Path(__file__).resolve().parent / "assets" / "sidebar_reference.png",
+            Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)) / "sidebar_reference.png"
+        ) if p.is_file()), None)
+        sidebar.set_artwork(QImage(str(sidebar_reference)) if sidebar_reference is not None
                             else world_art("sakura_dream.jpg"))
         version = QLabel("NAMELESS REDUX\nWORLD REBORN V2.0")
         version.setObjectName("version")
@@ -2394,9 +2398,13 @@ class ReduxWindow(QMainWindow):
         self.pages["World Reborn"].reload_art()
         if hasattr(self, "scenic_sidebar"):
             from world_reborn import art as world_art
-            sidebar_reference = Path(__file__).resolve().parent / "assets" / "sidebar_reference.png"
+            sidebar_reference = next((p for p in (
+            Path(sys.executable).resolve().parent / "sidebar_reference.png",
+            Path(__file__).resolve().parent / "assets" / "sidebar_reference.png",
+            Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)) / "sidebar_reference.png"
+        ) if p.is_file()), None)
             self.scenic_sidebar.set_artwork(
-                QImage(str(sidebar_reference)) if sidebar_reference.is_file()
+                QImage(str(sidebar_reference)) if sidebar_reference is not None
                 else world_art("sakura_dream.jpg"))
         # A new real preview is only loaded if the player has not already
         # selected their own screenshot, which must take precedence.
