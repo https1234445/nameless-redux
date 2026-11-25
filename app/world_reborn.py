@@ -8,6 +8,7 @@ from PySide6.QtGui import QColor, QImage, QPixmap
 from PySide6.QtWidgets import (QWidget, QLabel, QFrame, QPushButton, QVBoxLayout,
     QHBoxLayout, QGridLayout, QSlider, QScrollArea, QGraphicsDropShadowEffect)
 from art_pack import art_candidates
+from world_split import SplitPreview
 
 PACKS = [
     ("SAKURA DREAM", "Spring vibes, soft light and cherry petals.", "sakura_dream.jpg", "#F58ACA"),
@@ -120,8 +121,8 @@ class WorldReborn(QWidget):
         full=QPushButton("OPEN FULL VISUAL LAB");full.clicked.connect(self.open_visual_lab.emit)
         header.addWidget(full)
         comparison=QHBoxLayout();bl.addLayout(comparison)
-        self.before=ArtLabel(height=240);self.after=ArtLabel(height=240)
-        comparison.addWidget(self.before,1);comparison.addWidget(self.after,1)
+        self.split=SplitPreview()
+        comparison.addWidget(self.split,2)
         controls=QVBoxLayout();comparison.addLayout(controls,1)
         for key,minimum,maximum,default in (("Brightness",-100,100,18),("Contrast",-100,100,24),
                                             ("Saturation",-100,100,37),("Temperature",-100,100,12)):
@@ -133,14 +134,13 @@ class WorldReborn(QWidget):
             self.controls[key]=(slider,val)
         self.source=art("rob_run_preview.jpg")
         if self.source.isNull():self.source=art("sakura_dream.jpg")
-        self.before.set_image(self.source)
         self.select_pack(0)
         self.update_after()
 
     def select_pack(self,index):
         self.pack=index;self.angle=0
         name,desc,filename,color=PACKS[index]
-        self.hero_title.setText(name);self.hero_desc.setText(desc)
+        self.hero_title.setText(name);self.hero_desc.setText("SIGNATURE REDUX  /  "+desc)
         for i,(card,button) in enumerate(self.cards):
             active=i==index
             card.setStyleSheet("QFrame#worldPanel {background:#1C1324; border:2px solid "+
@@ -183,4 +183,4 @@ class WorldReborn(QWidget):
                 bb=(gray+(bb-gray)*saturation-127)*contrast+127+bright-temp
                 img.setPixelColor(x,y,QColor(max(0,min(255,int(rr))),
                     max(0,min(255,int(gg))),max(0,min(255,int(bb)))))
-        self.after.set_image(img)
+        self.split.set_images(self.source,img)
