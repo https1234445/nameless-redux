@@ -1347,7 +1347,7 @@ class ReduxWindow(QMainWindow):
             self.effect_sliders[key] = self.add_slider(effects_layout, label, low, high, initial)
         self.effects_timer = QTimer(self)
         self.effects_timer.setSingleShot(True)
-        self.effects_timer.setInterval(25)
+        self.effects_timer.setInterval(45)
         self.effects_timer.timeout.connect(self.update_effects_preview)
         for slider in self.effect_sliders.values():
             slider.valueChanged.connect(self.update_effects_preview)
@@ -2613,8 +2613,8 @@ class ReduxWindow(QMainWindow):
         self.effects_preview.compare_enabled = True
         self.compare_check.setChecked(True)
         self.effect_feedback.setText("AFTER  /  " + "  •  ".join(f"{k.upper()} {v}" for k, v in values.items()))
-        # Every adjustment updates the AFTER half while BEFORE stays original.
-        self.effects_preview.flush_effects()
+        # Keep dragging responsive: the preview's single-shot timer coalesces
+        # rapid slider changes. Explicit exports and tests still flush on demand.
 
     def save_effects(self):
         for key, slider in self.effect_sliders.items():
