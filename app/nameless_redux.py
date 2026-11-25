@@ -728,6 +728,63 @@ class CrosshairPreview(QWidget):
 
 
 
+class HomeFeatureButton(QPushButton):
+    """Native accessible button with a painted world preview and neon edge."""
+    def __init__(self, symbol, heading, detail, image_name, parent=None):
+        super().__init__(parent)
+        from world_reborn import art as world_art
+        self.symbol = symbol
+        self.heading = heading
+        self.detail = detail
+        self.preview = world_art(image_name)
+        self.setText(heading)
+        self.setAccessibleName(heading)
+        self.setMinimumHeight(200)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        rect = self.rect().adjusted(2, 2, -3, -3)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor("#1B1028"))
+        p.drawRoundedRect(rect, 18, 18)
+        p.save()
+        from PySide6.QtGui import QPainterPath
+        path = QPainterPath()
+        path.addRoundedRect(rect, 18, 18)
+        p.setClipPath(path)
+        if not self.preview.isNull():
+            photo = self.preview.scaled(rect.width(), rect.height(),
+                                        Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            p.drawImage(rect.x()+(rect.width()-photo.width())//2,
+                        rect.y()+(rect.height()-photo.height())//2, photo)
+        shade = QLinearGradient(0, rect.y(), 0, rect.bottom())
+        shade.setColorAt(0, QColor(17, 9, 30, 248))
+        shade.setColorAt(.5, QColor(35, 12, 42, 205))
+        shade.setColorAt(1, QColor(25, 6, 33, 40))
+        p.fillRect(rect, shade)
+        p.restore()
+        border = QLinearGradient(rect.left(), rect.top(), rect.right(), rect.bottom())
+        border.setColorAt(0, QColor("#FF9BE3"))
+        border.setColorAt(.45, QColor("#F52DAF"))
+        border.setColorAt(1, QColor("#70D9FF"))
+        p.setPen(QPen(QBrush(border), 2 if self.underMouse() else 1.5))
+        p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(rect, 18, 18)
+        p.setPen(QColor("#FFF0FC"))
+        icon_font = QFont("Segoe UI Symbol", 30)
+        p.setFont(icon_font)
+        p.drawText(rect.adjusted(22, 16, -12, -12), Qt.AlignLeft|Qt.AlignTop, self.symbol)
+        p.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        p.drawText(rect.adjusted(22, 86, -10, -10), Qt.AlignLeft|Qt.AlignTop, self.heading)
+        p.setFont(QFont("Segoe UI", 11))
+        p.setPen(QColor("#E6C6E4"))
+        p.drawText(rect.adjusted(22, 119, -10, -10), Qt.AlignLeft|Qt.AlignTop, self.detail)
+        p.end()
+
+
 class HomeScene(QWidget):
     """Home hero uses the existing approved car art, never a new car drawing."""
     def __init__(self, parent=None):
@@ -1407,15 +1464,13 @@ class ReduxWindow(QMainWindow):
 
         feature_grid = QHBoxLayout()
         feature_grid.setSpacing(13)
-        for icon, title, subtitle, destination in (
-            ("◇", "Redux Collection", "Worlds & Styles", "World Reborn"),
-            ("☷", "Visual Lab", "Before / After Editor", "Visuals Studio"),
-            ("▧", "Gallery", "All Previews", "Redux Collection"),
-            ("⚙", "Settings", "Preferences", "Settings"),
+        for icon, title, subtitle, destination, artwork in (
+            ("◇", "Redux Collection", "Worlds & Styles", "World Reborn", "sakura_dream.jpg"),
+            ("☷", "Visual Lab", "Before / After Editor", "Visuals Studio", "neon_night.jpg"),
+            ("▧", "Gallery", "All Previews", "Redux Collection", "frostbite.jpg"),
+            ("⚙", "Settings", "Preferences", "Settings", "crimson.jpg"),
         ):
-            tile = QPushButton(f"{icon}\\n\\n{title}\\n{subtitle}")
-            tile.setObjectName("homeFeature")
-            tile.setMinimumHeight(200)
+            tile = HomeFeatureButton(icon, title, subtitle, artwork)
             tile.clicked.connect(lambda checked=False, name=destination: self.navigate(name))
             feature_grid.addWidget(tile, 1)
         l.addLayout(feature_grid, 4)
