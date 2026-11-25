@@ -4,6 +4,7 @@ Tests only user-approved public reference endpoints; does not infer ROB RUN
 server health, capture game traffic, change DNS, or modify network settings.
 """
 from __future__ import annotations
+from ui_controls import ClickOnlyComboBox
 
 import json
 import socket
@@ -133,7 +134,7 @@ class PingLab(QDialog):
         note.setWordWrap(True)
         root.addWidget(note)
         root.addWidget(QLabel("PUBLIC REFERENCE ENDPOINT"))
-        self.endpoint = QComboBox()
+        self.endpoint = ClickOnlyComboBox()
         self.endpoint.addItems(ENDPOINTS)
         root.addWidget(self.endpoint)
         self.start_button = QPushButton("RUN 12-SAMPLE CONNECTION CHECK")
