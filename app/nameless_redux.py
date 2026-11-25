@@ -1265,7 +1265,7 @@ class ReduxWindow(QMainWindow):
         self.apply_style()
         self.load_settings()
         self.restore_audio_list()
-        self.navigate("World Reborn")
+        self.navigate("Overview")
         self.steam_timer.start()
         QTimer.singleShot(500, self.refresh_steam_status)
         QTimer.singleShot(900, self.load_initial_screenshot)
@@ -1329,89 +1329,61 @@ class ReduxWindow(QMainWindow):
             {"SAKURA DREAM":"Coral", "NEON NIGHT":"Deep Violet",
              "FROSTBITE":"Arctic Blue", "CRIMSON":"Sunset"}[name], name))
         self.add_page("World Reborn", world)
-        # Overview
+        # Home — the first screen, matching the neon reference composition.
         page = QWidget()
+        page.setObjectName("homePage")
         l = QVBoxLayout(page)
-        l.setSpacing(20)
+        l.setContentsMargins(12, 16, 12, 12)
+        l.setSpacing(14)
+
         hero = PremiumHero()
         self.hero = hero
         hero.setObjectName("heroCard")
-        hero.setMinimumHeight(302)
+        hero.setMinimumHeight(365)
         hl = QVBoxLayout(hero)
-        hl.setContentsMargins(38, 31, 34, 28)
+        hl.setContentsMargins(36, 30, 30, 26)
         hl.setSpacing(10)
-        tag = QLabel("N A M E L E S S   /   ROB RUN EDITION  •  CONCEPT SHOWCASE")
-        tag.setObjectName("accent")
-        hl.addWidget(tag)
-        headline = QLabel("MAKE EVERY\nRUN YOURS.")
-        headline.setObjectName("heroHeadline")
+        headline = QLabel("NAMELESS  REDUX")
+        headline.setObjectName("homeBrand")
         hl.addWidget(headline)
-        desc = QLabel(
-            "FOUR ORIGINAL WORLDS  /  TWENTY COSMETIC CONCEPTS\n"
-            "Build your signature look. Preview it safely inside NAMELESS."
-        )
-        desc.setObjectName("heroDescription")
+        subline = QLabel("W O R L D   R E B O R N   v 2 . 0")
+        subline.setObjectName("homeSubline")
+        hl.addWidget(subline)
+        hl.addSpacing(12)
+        desc = QLabel("Next-Gen Visual Suite for  ROB RUN")
+        desc.setObjectName("homeDescription")
         hl.addWidget(desc)
         hl.addStretch()
         hero_actions = QHBoxLayout()
-        hero_actions.setSpacing(10)
-        open_visuals = QPushButton("EXPLORE VISUAL LAB   ↗")
-        open_visuals.setObjectName("primaryAction")
-        open_visuals.clicked.connect(lambda: self.navigate("Visuals Studio"))
-        hero_actions.addWidget(open_visuals)
-        showroom = QPushButton("EXPLORE REDUX WORLDS")
-        showroom.clicked.connect(
-            lambda checked=False: self.open_redux_showroom())
-        hero_actions.addWidget(showroom)
-        garage = QPushButton("BUILD YOUR LOOK")
-        garage.clicked.connect(
-            lambda checked=False: self.open_cosmetic_garage())
-        hero_actions.addWidget(garage)
+        hero_actions.setSpacing(14)
+        start = QPushButton("▶   LAUNCH ROB RUN")
+        start.setObjectName("homeLaunch")
+        start.clicked.connect(self.launch_steam_game)
+        hero_actions.addWidget(start)
+        mods = QPushButton("⚙   MOD MANAGER")
+        mods.setObjectName("homeModManager")
+        mods.clicked.connect(lambda checked=False: self.navigate("Game Center"))
+        hero_actions.addWidget(mods)
         hero_actions.addStretch()
         hl.addLayout(hero_actions)
-        l.addWidget(hero)
-        grid = QGridLayout()
-        stats = [
-            ("VISUAL PACKS", str(len(VISUAL_PACKS) + len(self.custom_visual_packs)), "Built-in and custom"),
-            ("SAVED PROFILES", str(len(self.profiles)), "Your configurations"),
-            ("AUDIO FILES", "0", "Local preview library"),
-        ]
+        l.addWidget(hero, 6)
+
+        feature_grid = QHBoxLayout()
+        feature_grid.setSpacing(13)
+        for icon, title, subtitle, destination in (
+            ("◇", "Redux Collection", "Worlds & Styles", "World Reborn"),
+            ("☷", "Visual Lab", "Before / After Editor", "Visuals Studio"),
+            ("▧", "Gallery", "All Previews", "Redux Collection"),
+            ("⚙", "Settings", "Preferences", "Settings"),
+        ):
+            tile = QPushButton(f"{icon}\\n\\n{title}\\n{subtitle}")
+            tile.setObjectName("homeFeature")
+            tile.setMinimumHeight(200)
+            tile.clicked.connect(lambda checked=False, name=destination: self.navigate(name))
+            feature_grid.addWidget(tile, 1)
+        l.addLayout(feature_grid, 4)
+        l.addStretch(1)
         self.stat_values = []
-        for i, (title, value, hint) in enumerate(stats):
-            c, cl = self.card(title, hint)
-            val = QLabel(value)
-            val.setObjectName("stat")
-            c.setObjectName("statCard")
-            cl.addWidget(val)
-            grid.addWidget(c, 0, i)
-            self.stat_values.append(val)
-        grid.setHorizontalSpacing(14)
-        grid.setVerticalSpacing(14)
-        l.addLayout(grid)
-        quick, ql = self.card("QUICK ACCESS", "Jump into your workspace.")
-        row = QHBoxLayout()
-        for text, target in [("Visuals Studio", "Visuals Studio"),
-                             ("Sound Library", "Sound Library"),
-                             ("Crosshair Studio", "Crosshair Studio")]:
-            b = QPushButton(text)
-            b.clicked.connect(lambda checked=False, n=target: self.navigate(n))
-            row.addWidget(b)
-        ql.addLayout(row)
-        overview_bottom = QHBoxLayout()
-        overview_bottom.setSpacing(14)
-        overview_bottom.addWidget(quick, 3)
-        steam_shortcut, steam_shortcut_layout = self.card(
-            "ROB RUN  /  STEAM", "Connect to your installed game safely.")
-        steam_launch = QPushButton("OPEN GAME CENTER   ↗")
-        steam_launch.clicked.connect(lambda: self.navigate("Game Center"))
-        steam_shortcut_layout.addWidget(steam_launch)
-        overview_bottom.addWidget(steam_shortcut, 2)
-        l.addLayout(overview_bottom)
-        note = QLabel("ORIGINAL CONCEPT ART   •   STANDALONE PREVIEWS   •   NO GAME-FILE MODIFICATIONS")
-        note.setObjectName("muted")
-        note.setWordWrap(True)
-        l.addWidget(note)
-        l.addStretch()
         self.add_page("Overview", page)
 
         # Visuals
@@ -2645,6 +2617,8 @@ class ReduxWindow(QMainWindow):
             self.update_stats()
 
     def update_stats(self):
+        if not self.stat_values:
+            return
         self.stat_values[0].setText(str(len(VISUAL_PACKS) + len(self.custom_visual_packs)))
         self.stat_values[1].setText(str(len(self.profiles)))
         self.stat_values[2].setText(str(len(self.audio_files)))
@@ -3272,6 +3246,28 @@ class ReduxWindow(QMainWindow):
                 stop:0 rgba(210,44,139,125),stop:0.5 rgba(91,25,79,95),
                 stop:1 rgba(12,10,22,20));color:#FFFFFF;
                 border-bottom:3px solid #FF6CC5;}
+            QLabel#homeBrand {font-family:Georgia;font-size:45px;font-weight:900;
+                color:#FFE9FA;background:transparent;}
+            QLabel#homeSubline {font-size:17px;font-weight:800;
+                color:#F5B3E1;letter-spacing:4px;background:transparent;}
+            QLabel#homeDescription {font-size:18px;color:#F2D5E8;background:transparent;}
+            QPushButton#homeLaunch, QPushButton#homeModManager {
+                font-size:15px;font-weight:900;min-height:48px;
+                padding:8px 22px;border-radius:13px;color:#FFFFFF;
+                border:2px solid #FF72C5;
+                background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(206,38,145,150),stop:.55 rgba(83,18,81,115),
+                stop:1 rgba(24,10,37,130));}
+            QPushButton#homeLaunch:hover, QPushButton#homeModManager:hover {
+                border-color:#FFDEFA;background:rgba(225,58,151,160);}
+            QPushButton#homeFeature {text-align:left;padding:20px;
+                color:#FFF1FA;font-size:19px;font-weight:800;
+                border-radius:17px;border:1px solid #E96FBE;
+                background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(126,33,112,170),stop:.55 rgba(49,23,78,185),
+                stop:1 rgba(15,13,37,210));}
+            QPushButton#homeFeature:hover {border:2px solid #FF9AD9;
+                background:rgba(161,38,121,170);}
             QLabel#gameStatusTop {color:#26FF93;font-size:12px;font-weight:900;
                 padding:7px 5px;}
             QPushButton:focus {outline:0px;border-color:#FF8CD5;}
