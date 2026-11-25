@@ -31,7 +31,7 @@ window.more_tools_button.click()
 assert all(button.isHidden() for button in window.secondary_nav)
 assert window.main_header.isHidden(), "World Reborn must have one clean top navigation row"
 window.navigate("Visuals Studio")
-assert not window.main_header.isHidden(), "Other workspace tools retain their header"
+assert window.main_header.isHidden(), "Use the same compact top bar on every page"
 window.navigate("World Reborn")
 assert len(world.angle_buttons) == 5
 assert all(not button.icon().isNull() for button in world.angle_buttons), "Missing car thumbnails"
