@@ -1184,7 +1184,10 @@ class ReduxWindow(QMainWindow):
         # The scenic image now fills the lower sidebar behind the controls.
         # No opaque photo tile: labels and navigation float over the sky.
         from world_reborn import art as world_art
-        sidebar.set_artwork(world_art("sakura_dream.jpg"))
+        # Sidebar uses its own reference artwork, never the Sakura world cover.
+        sidebar_reference = Path(__file__).resolve().parent / "assets" / "sidebar_reference.png"
+        sidebar.set_artwork(QImage(str(sidebar_reference)) if sidebar_reference.is_file()
+                            else world_art("sakura_dream.jpg"))
         version = QLabel("NAMELESS REDUX\nWORLD REBORN V2.0")
         version.setObjectName("version")
         side.addWidget(version)
@@ -2391,7 +2394,10 @@ class ReduxWindow(QMainWindow):
         self.pages["World Reborn"].reload_art()
         if hasattr(self, "scenic_sidebar"):
             from world_reborn import art as world_art
-            self.scenic_sidebar.set_artwork(world_art("sakura_dream.jpg"))
+            sidebar_reference = Path(__file__).resolve().parent / "assets" / "sidebar_reference.png"
+            self.scenic_sidebar.set_artwork(
+                QImage(str(sidebar_reference)) if sidebar_reference.is_file()
+                else world_art("sakura_dream.jpg"))
         # A new real preview is only loaded if the player has not already
         # selected their own screenshot, which must take precedence.
         if not str(self.settings.value("preview/screenshot", "") or ""):
