@@ -112,8 +112,8 @@ window.select_gallery_pack("SAKURA DREAM")
 window.select_gallery_slot("vehicle")
 
 # Premium hero is static, legible and paintable without an animation timer.
-from premium_hero import PremiumHero
-assert isinstance(window.hero, PremiumHero)
+from nameless_redux import HomeScene
+assert isinstance(window.hero, HomeScene)
 assert window.hero.minimumHeight() >= 300
 assert not hasattr(window.hero, "_clock")
 
