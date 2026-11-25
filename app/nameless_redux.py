@@ -1417,6 +1417,8 @@ class ReduxWindow(QMainWindow):
         self.effects_timer.timeout.connect(self.update_effects_preview)
         for slider in self.effect_sliders.values():
             slider.valueChanged.connect(self.update_effects_preview)
+            slider.valueChanged.connect(
+                lambda value, control=slider: self.sync_comparison_divider(control, value))
         effect_actions = QHBoxLayout()
         for title, handler in [
             ("SAVE EFFECTS", self.save_effects),
@@ -2701,6 +2703,19 @@ class ReduxWindow(QMainWindow):
                 self.effect_sliders[key].setValue(value)
             self.effects_timer.stop()
             self.update_effects_preview()
+
+    def sync_comparison_divider(self, slider, value):
+        """Move the split guide with whichever grading slider is being dragged.
+
+        All four controls have different ranges, so normalize to 0..100.
+        Never switch comparison on when the user has disabled it.
+        """
+        if not self.compare_check.isChecked():
+            return
+        span = slider.maximum() - slider.minimum()
+        if span:
+            percent = round(100 * (value - slider.minimum()) / span)
+            self.compare_slider.setValue(percent)
 
     def update_effects_preview(self):
         values = {key: slider.value() for key, slider in self.effect_sliders.items()}
