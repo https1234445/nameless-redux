@@ -172,7 +172,6 @@ class WorldReborn(QWidget):
         # Visual Lab is a separate workspace page, not embedded in World Reborn.
         # This also avoids costly synchronous image processing on the landing page.
         self.select_pack(0)
-        self.update_after()
 
     def select_pack(self,index):
         self.pack=index
