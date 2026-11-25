@@ -1241,7 +1241,8 @@ class ReduxWindow(QMainWindow):
 
     def build_pages(self):
         world = WorldReborn()
-        world.open_collection.connect(lambda: self.navigate("Redux Collection"))
+        world.open_collection.connect(lambda pack: (
+            self.select_gallery_pack(pack), self.navigate("Redux Collection")))
         world.open_visual_lab.connect(lambda: self.navigate("Visuals Studio"))
         world.open_cosmetics.connect(lambda name: self.open_cosmetic_garage(name))
         world.apply_look.connect(lambda name: self.activate_collection_pack(
