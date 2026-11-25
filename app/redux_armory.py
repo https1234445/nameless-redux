@@ -9,7 +9,7 @@ import json
 import math
 from pathlib import Path
 
-from PySide6.QtCore import QPointF, QRectF, Qt
+from PySide6.QtCore import QPointF, QRectF, Qt, QSettings
 from PySide6.QtGui import (QBrush, QColor, QFont, QImage, QLinearGradient,
                           QPainter, QPen, QPolygonF, QRadialGradient)
 from PySide6.QtWidgets import (QComboBox, QDialog, QFileDialog, QFrame, QHBoxLayout,
@@ -370,6 +370,8 @@ class CosmeticGarage(QDialog):
         if initial_pack not in PACK_NAMES:
             initial_pack = PACK_NAMES[0]
         self.setWindowTitle("NAMELESS REDUX  /  COSMETIC GARAGE")
+        self._settings = QSettings("NAMELESS", "NAMELESS REDUX")
+        self._restoring = False
         self.resize(1230, 835)
         self.setMinimumSize(900, 670)
 
@@ -454,6 +456,7 @@ class CosmeticGarage(QDialog):
         layout.addWidget(self.status)
 
         self.category_select.currentIndexChanged.connect(self.update_preview)
+        self.restore_local_loadout()
         self.update_preview()
         self.setStyleSheet("""
             QDialog { background: #101427; color: #F4F5FF; }
@@ -487,6 +490,26 @@ class CosmeticGarage(QDialog):
     def on_slot_changed(self, slot, pack):
         if slot == SLOTS[self.category_select.currentIndex()]:
             self.update_preview()
+        if not self._restoring:
+            self.save_local_loadout()
+
+    def save_local_loadout(self):
+        """Persist only the five safe preview selections in NAMELESS settings."""
+        payload = build_loadout_payload(self.loadout_slots())
+        self._settings.setValue(
+            "cosmetic_garage/loadout", json.dumps(payload, sort_keys=True))
+        self._settings.sync()
+
+    def restore_local_loadout(self):
+        """Ignore malformed or legacy data instead of crashing the garage."""
+        raw = self._settings.value("cosmetic_garage/loadout", "")
+        if not raw:
+            return
+        try:
+            payload = json.loads(str(raw))
+            self.apply_loadout(payload)
+        except (ValueError, TypeError, KeyError):
+            self._settings.remove("cosmetic_garage/loadout")
 
     def update_preview(self, *_):
         slot = SLOTS[self.category_select.currentIndex()]
@@ -498,9 +521,14 @@ class CosmeticGarage(QDialog):
 
     def apply_loadout(self, data):
         slots = validate_loadout_payload(data)
-        for slot, pack in slots.items():
-            self.slot_selects[slot].setCurrentText(pack)
+        self._restoring = True
+        try:
+            for slot, pack in slots.items():
+                self.slot_selects[slot].setCurrentText(pack)
+        finally:
+            self._restoring = False
         self.update_preview()
+        self.save_local_loadout()
 
     def export_png(self):
         filename, _ = QFileDialog.getSaveFileName(
