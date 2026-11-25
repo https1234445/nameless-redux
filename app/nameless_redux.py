@@ -728,111 +728,6 @@ class CrosshairPreview(QWidget):
 
 
 
-class ExactHomeOverlay(QWidget):
-    """Whole-window screenshot reference, with native working click targets."""
-    def __init__(self, image_path, navigate, launch):
-        super().__init__()
-        self.image = QImage(str(image_path))
-        self.go = navigate
-        self.launch = launch
-        self.setMouseTracking(True)
-        self.setObjectName("exactHomeOverlay")
-
-    def _image_rect(self):
-        w, h = self.width(), self.height()
-        if self.image.isNull() or not w or not h:
-            return QRect(0, 0, w, h)
-        scale = min(w / self.image.width(), h / self.image.height())
-        sw = round(self.image.width() * scale)
-        sh = round(self.image.height() * scale)
-        return QRect((w-sw)//2, (h-sh)//2, sw, sh)
-
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.SmoothPixmapTransform)
-        p.fillRect(self.rect(), QColor("#0A0611"))
-        if not self.image.isNull():
-            p.drawImage(self._image_rect(), self.image)
-        p.end()
-
-    def mouseReleaseEvent(self, event):
-        if event.button() != Qt.LeftButton or self.image.isNull():
-            return
-        rect = self._image_rect()
-        if not rect.contains(event.position().toPoint()):
-            return
-        x = (event.position().x() - rect.x()) * 1672 / rect.width()
-        y = (event.position().y() - rect.y()) * 941 / rect.height()
-        # Top navigation and sidebar, as pictured in the supplied reference.
-        if y < 64:
-            if x >= 1600: self.window().close()
-            elif 1555 <= x < 1600: self.window().showNormal() if self.window().isMaximized() else self.window().showMaximized()
-            elif 1515 <= x < 1555: self.window().showMinimized()
-            elif 315 <= x < 455: self.go("Overview")
-            elif 455 <= x < 650: self.go("World Reborn")
-            elif 650 <= x < 800: self.go("Visuals Studio")
-            elif 800 <= x < 940: self.go("Redux Collection")
-            elif 940 <= x < 1080: self.go("Settings")
-            elif 1300 <= x < 1520: self.launch()
-        elif x < 300:
-            if 130 <= y < 210: self.go("Overview")
-            elif 210 <= y < 285: self.go("World Reborn")
-            elif 285 <= y < 360: self.go("Visuals Studio")
-            elif 360 <= y < 425: self.go("Redux Collection")
-            elif 425 <= y < 490: self.go("Settings")
-            elif 490 <= y < 560: self.go("Crosshair Studio")
-        elif 420 <= y < 530:
-            if 340 <= x < 760: self.launch()
-            elif 760 <= x < 1080: self.go("Game Center")
-        elif 580 <= y < 885:
-            if 345 <= x < 655: self.go("World Reborn")
-            elif 655 <= x < 975: self.go("Visuals Studio")
-            elif 975 <= x < 1295: self.go("Redux Collection")
-            elif 1295 <= x < 1640: self.go("Settings")
-
-
-class ReferenceHome(QWidget):
-    """Pixel-faithful Home image with working transparent click regions.
-
-    The image is an optional user-provided reference asset, kept separate from
-    car/world art. On missing asset, the regular Qt Home remains functional.
-    """
-    def __init__(self, image_path, navigate, launch):
-        super().__init__()
-        self.image = QImage(str(image_path))
-        self.go = navigate
-        self.launch = launch
-        self.setMinimumHeight(440)
-        self.setCursor(Qt.PointingHandCursor)
-
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.SmoothPixmapTransform)
-        p.fillRect(self.rect(), QColor("#0B0712"))
-        if not self.image.isNull():
-            p.drawImage(self.rect(), self.image)
-        p.end()
-
-    def mouseReleaseEvent(self, event):
-        if event.button() != Qt.LeftButton:
-            return super().mouseReleaseEvent(event)
-        x = event.position().x() * 1348 / max(1, self.width())
-        y = event.position().y() * 868 / max(1, self.height())
-        if 350 < y < 465 and 20 < x < 470:
-            self.launch()
-        elif 350 < y < 465 and 470 < x < 795:
-            self.go("Game Center")
-        elif 515 < y < 840:
-            if x < 350:
-                self.go("World Reborn")
-            elif x < 690:
-                self.go("Visuals Studio")
-            elif x < 1025:
-                self.go("Redux Collection")
-            else:
-                self.go("Settings")
-
-
 class HomeScene(QWidget):
     """Home hero uses the existing approved car art, never a new car drawing."""
     def __init__(self, parent=None):
@@ -1393,19 +1288,9 @@ class ReduxWindow(QMainWindow):
 
         self.build_pages()
         self.build_collection()
-        # Exact screenshot layer covers the entire application on Home only.
-        # All other pages remain fully native, editable and functional.
-        full_home = next((p for p in (
-            Path(sys.executable).resolve().parent / "home_full_reference.jpg",
-            Path(__file__).resolve().parent / "assets" / "home_full_reference.jpg",
-            Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)) / "home_full_reference.jpg"
-        ) if p.is_file()), None)
-        self.exact_home = (ExactHomeOverlay(full_home, self.navigate, self.launch_steam_game)
-                           if full_home is not None else None)
-        if self.exact_home is not None:
-            self.exact_home.setParent(self.centralWidget())
-            self.exact_home.setGeometry(self.centralWidget().rect())
-            self.exact_home.hide()
+        # Home is always built from real Qt widgets; no screenshot overlay,
+        # external JPEG or invisible coordinate-based click zones are needed.
+        self.exact_home = None
         # Wheel must scroll the page regardless of the widget under the pointer.
         QApplication.instance().installEventFilter(self)
         self.apply_theme_colors()
@@ -1536,13 +1421,6 @@ class ReduxWindow(QMainWindow):
         l.addLayout(feature_grid, 4)
         l.addStretch(1)
         self.stat_values = []
-        home_asset = next((p for p in (
-            Path(sys.executable).resolve().parent / "home_reference.jpg",
-            Path(__file__).resolve().parent / "assets" / "home_reference.jpg",
-            Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)) / "home_reference.jpg"
-        ) if p.is_file()), None)
-        if home_asset is not None:
-            page = ReferenceHome(home_asset, self.navigate, self.launch_steam_game)
         self.add_page("Overview", page)
 
         # Visuals
