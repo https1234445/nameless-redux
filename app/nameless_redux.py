@@ -728,6 +728,35 @@ class CrosshairPreview(QWidget):
 
 
 
+class HomeScene(QWidget):
+    """Home hero uses the existing approved car art, never a new car drawing."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        from world_reborn import art as world_art
+        self.image = world_art("sakura_dream.jpg")
+        self.setMinimumHeight(340)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        w, h = self.width(), self.height()
+        p.fillRect(self.rect(), QColor("#120A19"))
+        if not self.image.isNull() and w > 0 and h > 0:
+            pic = self.image.scaled(w, h, Qt.KeepAspectRatioByExpanding,
+                                    Qt.SmoothTransformation)
+            p.drawImage((w-pic.width())//2, (h-pic.height())//2, pic)
+        dark = QLinearGradient(0, 0, w, 0)
+        dark.setColorAt(0, QColor(9, 5, 19, 252))
+        dark.setColorAt(.46, QColor(13, 7, 23, 232))
+        dark.setColorAt(.78, QColor(14, 7, 22, 65))
+        dark.setColorAt(1, QColor(14, 7, 22, 12))
+        p.fillRect(self.rect(), dark)
+        p.setPen(QPen(QColor("#D456A7"), 1))
+        p.drawRoundedRect(self.rect().adjusted(1, 1, -2, -2), 16, 16)
+        p.end()
+
+
 class ScenicSidebar(QFrame):
     """Full-height motel atmosphere, with text floating over the artwork."""
     def __init__(self, parent=None):
@@ -1336,7 +1365,7 @@ class ReduxWindow(QMainWindow):
         l.setContentsMargins(12, 16, 12, 12)
         l.setSpacing(14)
 
-        hero = PremiumHero()
+        hero = HomeScene()
         self.hero = hero
         hero.setObjectName("heroCard")
         hero.setMinimumHeight(365)
