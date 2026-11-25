@@ -3,6 +3,7 @@
 Preview-only. Never edits ROB RUN or its assets.
 """
 from pathlib import Path
+from functools import lru_cache
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QImage, QPixmap, QIcon
 from PySide6.QtWidgets import (QWidget, QLabel, QFrame, QPushButton, QVBoxLayout,
@@ -16,10 +17,16 @@ PACKS = [
     ("CRIMSON", "Burning sky, warm shadows and bold contrast.", "crimson.jpg", "#FF817F"),
 ]
 
+@lru_cache(maxsize=20)
+def _decode_art(path, modified_ns):
+    """Cache decoded art; file mtime invalidates the cache after ZIP imports."""
+    return QImage(path)
+
+
 def art(name):
     for path in art_candidates(name):
         if path.is_file():
-            image = QImage(str(path))
+            image = _decode_art(str(path), path.stat().st_mtime_ns)
             if not image.isNull():
                 return image
     return QImage()
@@ -103,6 +110,7 @@ class WorldReborn(QWidget):
         grid.setSpacing(10)
         top.addLayout(grid,5)
         self.cards=[]
+        self.card_covers=[]
         for idx,(name,description,filename,color) in enumerate(PACKS):
             card=QFrame()
             card.setObjectName("worldPanel")
@@ -111,6 +119,7 @@ class WorldReborn(QWidget):
             cl.setSpacing(5)
             cover=ArtLabel(art(filename),145)
             cl.addWidget(cover,1)
+            self.card_covers.append(cover)
             label=QLabel(name.title())
             label.setObjectName("worldPack")
             cl.addWidget(label)
@@ -174,6 +183,13 @@ class WorldReborn(QWidget):
         # Visual Lab is a separate workspace page, not embedded in World Reborn.
         # This also avoids costly synchronous image processing on the landing page.
         self.select_pack(0)
+
+    def reload_art(self):
+        """Refresh every preview after the user imports a replacement art pack."""
+        _decode_art.cache_clear()
+        for i, (_, _, filename, _) in enumerate(PACKS):
+            self.card_covers[i].set_image(art(filename))
+        self.select_angle(self.angle)
 
     def select_pack(self,index):
         self.pack=index
