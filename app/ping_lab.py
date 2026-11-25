@@ -12,7 +12,10 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QObject, QThread, Signal, QSettings
+from ping_history import (HISTORY_FORMAT, add_entry, make_entry,
+                          validate_history, history_text)
+
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox,
     QPushButton, QSpinBox, QTextEdit, QVBoxLayout)
@@ -107,6 +110,8 @@ class PingLab(QDialog):
         self.worker = None
         self.last_result = None
         self.last_endpoint = None
+        self.settings = QSettings("NAMELESS", "NAMELESS REDUX")
+        self.history = self.load_history()
         self.setStyleSheet("""
             QDialog { background: #101326; color: #F5F2FF; }
             QLabel { color: #F5F2FF; }
@@ -151,6 +156,19 @@ class PingLab(QDialog):
             "05  Never disable your firewall, antivirus or security settings "
             "for a supposed ping boost.")
         root.addWidget(guide, 1)
+        root.addWidget(QLabel("LOCAL CONNECTION HISTORY  /  LAST 60 CHECKS"))
+        self.history_view = QTextEdit()
+        self.history_view.setReadOnly(True)
+        self.history_view.setPlainText(history_text(self.history))
+        root.addWidget(self.history_view, 1)
+        history_buttons = QHBoxLayout()
+        export_history = QPushButton("EXPORT HISTORY JSON")
+        export_history.clicked.connect(self.export_history)
+        history_buttons.addWidget(export_history)
+        clear_history = QPushButton("CLEAR LOCAL HISTORY")
+        clear_history.clicked.connect(self.clear_history)
+        history_buttons.addWidget(clear_history)
+        root.addLayout(history_buttons)
         buttons = QHBoxLayout()
         self.export_button = QPushButton("EXPORT DIAGNOSTIC JSON")
         self.export_button.clicked.connect(self.export_report)
@@ -166,6 +184,46 @@ class PingLab(QDialog):
         footer.setObjectName("netNote")
         footer.setWordWrap(True)
         root.addWidget(footer)
+
+    def load_history(self):
+        raw = self.settings.value("ping_lab/history", "")
+        if not raw:
+            return []
+        try:
+            return validate_history(json.loads(str(raw)))
+        except (ValueError, TypeError):
+            return []
+
+    def store_history(self):
+        payload = {"format": HISTORY_FORMAT, "entries": self.history}
+        self.settings.setValue("ping_lab/history", json.dumps(payload))
+        self.settings.sync()
+        self.history_view.setPlainText(history_text(self.history))
+
+    def clear_history(self):
+        confirm = QMessageBox.question(
+            self, "Clear PING LAB history",
+            "Delete all locally saved connection checks? This cannot be undone.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirm == QMessageBox.Yes:
+            self.history = []
+            self.store_history()
+
+    def export_history(self):
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export local PING LAB history",
+            "nameless-ping-history.json", "JSON (*.json)")
+        if not filename:
+            return
+        try:
+            Path(filename).write_text(json.dumps({
+                "format": HISTORY_FORMAT, "entries": self.history,
+                "method": "TCP connect to public reference endpoints",
+                "not_game_server_test": True,
+                "not_udp_packet_loss": True,
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError as exc:
+            QMessageBox.warning(self, "Export failed", str(exc))
 
     def start_probe(self):
         if self.thread is not None:
@@ -191,6 +249,9 @@ class PingLab(QDialog):
 
     def show_result(self, result):
         self.last_result = result
+        self.history = add_entry(
+            self.history, make_entry(self.last_endpoint, result))
+        self.store_history()
         self.export_button.setEnabled(True)
         lines = [
             "REFERENCE  /  " + self.last_endpoint,
