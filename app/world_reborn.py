@@ -50,108 +50,194 @@ class ArtLabel(QLabel):
             self.setText("PREVIEW UNAVAILABLE")
 
 class WorldReborn(QWidget):
+    """Reference-inspired collection screen. All actions remain NAMELESS-only."""
     open_collection = Signal()
     open_visual_lab = Signal()
     open_cosmetics = Signal(str)
     apply_look = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.pack = 0
         self.angle = 0
         self.controls = {}
+        self.setObjectName("rebornRoot")
         self.setStyleSheet("""
-            QFrame#worldPanel {background:#14101D; border:1px solid #5D3C62; border-radius:15px;}
-            QLabel#worldHeading {font-size:26px; font-weight:900; color:#F9E9F8;}
-            QLabel#worldMuted {font-size:12px; color:#BFB1CA;}
-            QLabel#worldPack {font-size:15px; font-weight:900; color:white;}
-            QPushButton {background:#30253B; color:#F8E6F8; border:1px solid #76517C;
-                         border-radius:8px; padding:8px 10px; font-weight:700;}
-            QPushButton:hover {border-color:#F68BD7; background:#563254;}
-            QPushButton#worldPrimary {background:#A7479C; border:1px solid #FF9FE2; color:white;}
-            QSlider::groove:horizontal {height:5px; background:#4E3B50; border-radius:2px;}
-            QSlider::handle:horizontal {background:#FF9DE1; width:15px; margin:-6px 0; border-radius:7px;}
-            QSlider::sub-page:horizontal {background:#D96CBF;}
+            QWidget#rebornRoot {background:#0B0911;color:#F8EAF6;}
+            QFrame#worldPanel {background:#14101B;border:1px solid #4D344D;border-radius:13px;}
+            QLabel#worldHeading {font-size:28px;font-weight:900;color:#F7F0F8;}
+            QLabel#worldMuted {font-size:12px;color:#C9B9C9;}
+            QLabel#worldPack {font-size:16px;font-weight:800;color:#FFFFFF;}
+            QPushButton {background:#241625;color:#FFE8FA;border:1px solid #6B3D66;
+                border-radius:8px;padding:7px;font-weight:700;}
+            QPushButton:hover {background:#472244;border-color:#FF91D8;}
+            QPushButton#worldPrimary {background:#77205D;border:2px solid #FF81D0;
+                color:#FFFFFF;font-size:14px;font-weight:900;padding:12px;}
+            QSlider::groove:horizontal {height:5px;background:#4A3D4C;border-radius:2px;}
+            QSlider::handle:horizontal {background:#FFFFFF;width:16px;margin:-6px 0;border-radius:8px;}
+            QSlider::sub-page:horizontal {background:#E66AB9;}
         """)
-        outer=QVBoxLayout(self);outer.setContentsMargins(5,5,5,5)
-        scroll=QScrollArea();scroll.setWidgetResizable(True);scroll.setFrameShape(QFrame.NoFrame)
+        outer=QVBoxLayout(self)
+        outer.setContentsMargins(8,8,8,8)
+        scroll=QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
         scroll.setStyleSheet("QScrollArea{background:transparent;border:0;}")
         outer.addWidget(scroll)
-        body=QWidget();scroll.setWidget(body)
-        root=QVBoxLayout(body);root.setSpacing(12);root.setContentsMargins(5,5,5,8)
-        title=QLabel("Redux Collection");title.setObjectName("worldHeading");root.addWidget(title)
-        sub=QLabel("Four unique worlds. One ride.  •  NAMELESS ORIGINAL CONCEPTS");sub.setObjectName("worldMuted");root.addWidget(sub)
-        top=QHBoxLayout();top.setSpacing(12);root.addLayout(top,3)
-        grid=QGridLayout();grid.setSpacing(9);top.addLayout(grid,2)
+        body=QWidget()
+        scroll.setWidget(body)
+        root=QVBoxLayout(body)
+        root.setContentsMargins(7,7,7,12)
+        root.setSpacing(13)
+
+        heading=QLabel("Redux Collection")
+        heading.setObjectName("worldHeading")
+        root.addWidget(heading)
+        subtitle=QLabel("Four unique worlds. One ride.")
+        subtitle.setObjectName("worldMuted")
+        root.addWidget(subtitle)
+
+        top=QHBoxLayout()
+        top.setSpacing(13)
+        root.addLayout(top,3)
+        grid=QGridLayout()
+        grid.setSpacing(10)
+        top.addLayout(grid,5)
         self.cards=[]
         for idx,(name,description,filename,color) in enumerate(PACKS):
-            card=QFrame();card.setObjectName("worldPanel")
-            cl=QVBoxLayout(card);cl.setContentsMargins(6,6,6,8);cl.setSpacing(5)
-            cover=ArtLabel(art(filename),120);cl.addWidget(cover,1)
-            label=QLabel(name);label.setObjectName("worldPack");cl.addWidget(label)
-            hint=QLabel(description);hint.setWordWrap(True);hint.setObjectName("worldMuted");cl.addWidget(hint)
-            button=QPushButton("SELECT WORLD");button.clicked.connect(lambda checked=False,i=idx:self.select_pack(i))
-            cl.addWidget(button);grid.addWidget(card,idx//2,idx%2)
+            card=QFrame()
+            card.setObjectName("worldPanel")
+            cl=QVBoxLayout(card)
+            cl.setContentsMargins(6,6,6,9)
+            cl.setSpacing(5)
+            cover=ArtLabel(art(filename),145)
+            cl.addWidget(cover,1)
+            label=QLabel(name.title())
+            label.setObjectName("worldPack")
+            cl.addWidget(label)
+            hint=QLabel(description)
+            hint.setObjectName("worldMuted")
+            hint.setWordWrap(True)
+            cl.addWidget(hint)
+            button=QPushButton("SELECT WORLD")
+            button.clicked.connect(lambda checked=False,i=idx:self.select_pack(i))
+            cl.addWidget(button)
+            grid.addWidget(card,idx//2,idx%2)
             self.cards.append((card,button))
-        hero=QFrame();hero.setObjectName("worldPanel");top.addWidget(hero,3)
-        hl=QVBoxLayout(hero);hl.setContentsMargins(11,11,11,11)
-        self.hero_title=QLabel();self.hero_title.setObjectName("worldHeading");hl.addWidget(self.hero_title)
-        self.hero_desc=QLabel();self.hero_desc.setObjectName("worldMuted");hl.addWidget(self.hero_desc)
-        self.hero_image=ArtLabel(height=295);hl.addWidget(self.hero_image,1)
-        angles=QHBoxLayout();hl.addLayout(angles)
+
+        hero=QFrame()
+        hero.setObjectName("worldPanel")
+        top.addWidget(hero,8)
+        hl=QVBoxLayout(hero)
+        hl.setContentsMargins(12,10,12,11)
+        hl.setSpacing(9)
+        self.hero_image=ArtLabel(height=300)
+        hl.addWidget(self.hero_image,1)
+        self.hero_title=QLabel()
+        self.hero_title.setObjectName("worldHeading")
+        hl.addWidget(self.hero_title)
+        self.hero_desc=QLabel()
+        self.hero_desc.setObjectName("worldMuted")
+        self.hero_desc.setWordWrap(True)
+        hl.addWidget(self.hero_desc)
+        angles=QHBoxLayout()
+        angles.setSpacing(6)
+        hl.addLayout(angles)
         self.angle_buttons=[]
         for idx,label in enumerate(("FULL VIEW","DETAIL 1","DETAIL 2","DETAIL 3","DETAIL 4")):
-            b=QPushButton(label);b.clicked.connect(lambda checked=False,i=idx:self.select_angle(i))
-            angles.addWidget(b);self.angle_buttons.append(b)
-        action=QHBoxLayout();hl.addLayout(action)
-        preview=QPushButton("PREVIEW HERE  ▶");preview.setObjectName("worldPrimary")
-        preview.clicked.connect(self.open_collection.emit);action.addWidget(preview)
-        cosmetics=QPushButton("VIEW COSMETICS")
+            b=QPushButton(label)
+            b.clicked.connect(lambda checked=False,i=idx:self.select_angle(i))
+            angles.addWidget(b)
+            self.angle_buttons.append(b)
+        actions=QHBoxLayout()
+        hl.addLayout(actions)
+        preview=QPushButton("▷  PREVIEW HERE")
+        preview.setObjectName("worldPrimary")
+        preview.clicked.connect(self.open_collection.emit)
+        actions.addWidget(preview,2)
+        cosmetics=QPushButton("COSMETICS")
         cosmetics.clicked.connect(lambda:self.open_cosmetics.emit(PACKS[self.pack][0]))
-        action.addWidget(cosmetics)
-        apply=QPushButton("APPLY LOOK TO NAMELESS")
+        actions.addWidget(cosmetics,1)
+        apply=QPushButton("✓  ACTIVATE IN NAMELESS")
         apply.clicked.connect(lambda:self.apply_look.emit(PACKS[self.pack][0]))
         hl.addWidget(apply)
-        note=QLabel("Preview only  •  Not a ROB RUN item  •  No game files changed")
-        note.setObjectName("worldMuted");hl.addWidget(note)
-        bottom=QFrame();bottom.setObjectName("worldPanel");root.addWidget(bottom,2)
-        bl=QVBoxLayout(bottom);bl.setContentsMargins(12,12,12,12)
-        header=QHBoxLayout();bl.addLayout(header)
-        visual=QLabel("VISUAL LAB");visual.setObjectName("worldHeading");header.addWidget(visual)
+        for caption in ("✓  Custom Livery", "✓  Unique Atmosphere",
+                        "✓  Matching Visuals", "✓  Preview Ready"):
+            item=QLabel(caption)
+            item.setStyleSheet("color:#EAB5DB;font-size:12px;padding-left:8px;")
+            hl.addWidget(item)
+        disclaimer=QLabel("CONCEPT PREVIEW ONLY  •  NO ROB RUN FILES CHANGED")
+        disclaimer.setObjectName("worldMuted")
+        hl.addWidget(disclaimer)
+
+        bottom=QFrame()
+        bottom.setObjectName("worldPanel")
+        root.addWidget(bottom,2)
+        bl=QVBoxLayout(bottom)
+        bl.setContentsMargins(12,12,12,12)
+        bl.setSpacing(10)
+        header=QHBoxLayout()
+        bl.addLayout(header)
+        visual=QLabel("☷  Visual Lab")
+        visual.setObjectName("worldHeading")
+        header.addWidget(visual)
+        intro=QLabel("Tune the look. See the difference.")
+        intro.setObjectName("worldMuted")
+        header.addWidget(intro)
         header.addStretch()
-        full=QPushButton("OPEN FULL VISUAL LAB");full.clicked.connect(self.open_visual_lab.emit)
+        full=QPushButton("OPEN FULL VISUAL LAB")
+        full.clicked.connect(self.open_visual_lab.emit)
         header.addWidget(full)
-        comparison=QHBoxLayout();bl.addLayout(comparison)
+        comparison=QHBoxLayout()
+        comparison.setSpacing(14)
+        bl.addLayout(comparison)
         self.split=SplitPreview()
-        comparison.addWidget(self.split,2)
-        controls=QVBoxLayout();comparison.addLayout(controls,1)
-        for key,minimum,maximum,default in (("Brightness",-100,100,18),("Contrast",-100,100,24),
-                                            ("Saturation",-100,100,37),("Temperature",-100,100,12)):
-            line=QHBoxLayout();controls.addLayout(line)
-            text=QLabel(key);text.setMinimumWidth(85);line.addWidget(text)
-            slider=QSlider(Qt.Horizontal);slider.setRange(minimum,maximum);slider.setValue(default)
-            slider.valueChanged.connect(self.update_after);line.addWidget(slider,1)
-            val=QLabel(str(default));val.setMinimumWidth(34);line.addWidget(val)
+        comparison.addWidget(self.split,7)
+        control_frame=QFrame()
+        control_frame.setObjectName("worldPanel")
+        comparison.addWidget(control_frame,4)
+        controls=QVBoxLayout(control_frame)
+        controls.setContentsMargins(12,10,12,10)
+        for key,minimum,maximum,default in (
+            ("Brightness",-100,100,18),("Contrast",-100,100,24),
+            ("Saturation",-100,100,37),("Temperature",-100,100,12)):
+            line=QHBoxLayout()
+            controls.addLayout(line)
+            text=QLabel(key)
+            text.setMinimumWidth(86)
+            line.addWidget(text)
+            slider=QSlider(Qt.Horizontal)
+            slider.setRange(minimum,maximum)
+            slider.setValue(default)
+            slider.valueChanged.connect(self.update_after)
+            line.addWidget(slider,1)
+            val=QLabel(f"{default:+d}")
+            val.setMinimumWidth(34)
+            line.addWidget(val)
             self.controls[key]=(slider,val)
         self.source=art("rob_run_preview.jpg")
-        if self.source.isNull():self.source=art("sakura_dream.jpg")
+        if self.source.isNull():
+            self.source=art("sakura_dream.jpg")
         self.select_pack(0)
         self.update_after()
 
     def select_pack(self,index):
-        self.pack=index;self.angle=0
+        self.pack=index
+        self.angle=0
         name,desc,filename,color=PACKS[index]
-        self.hero_title.setText(name);self.hero_desc.setText("SIGNATURE REDUX  /  "+desc)
+        self.hero_title.setText(name)
+        self.hero_desc.setText("SIGNATURE REDUX  /  "+desc)
         for i,(card,button) in enumerate(self.cards):
             active=i==index
-            card.setStyleSheet("QFrame#worldPanel {background:#1C1324; border:2px solid "+
-                (color if active else "#59415E")+";border-radius:13px;}")
+            card.setStyleSheet("QFrame#worldPanel {background:#1B1120;border:"+
+                ("2px solid "+color if active else "1px solid #51394F")+
+                ";border-radius:13px;}")
             button.setText("✓ SELECTED" if active else "SELECT WORLD")
         self.select_angle(0)
 
     def select_angle(self,index):
         self.angle=index
         image=art(PACKS[self.pack][2])
-        # Crop the same approved photograph to inspect real details, not invented camera angles.
         if index and not image.isNull():
             w,h=image.width(),image.height()
             regions=((0,0,w,h),(0,0,w//2,h//2),(w//2,0,w//2,h//2),
@@ -160,14 +246,14 @@ class WorldReborn(QWidget):
             image=image.copy(x,y,cw,ch)
         self.hero_image.set_image(image)
         for i,b in enumerate(self.angle_buttons):
-            b.setStyleSheet("border:2px solid #F69CD9;" if i==index else "")
+            b.setStyleSheet("border:2px solid #FF8BD6;background:#532449;" if i==index else "")
 
     def update_after(self,*_):
-        if self.source.isNull():return
-        from PySide6.QtGui import QColor
-        import math
+        if self.source.isNull():
+            return
         values={key:slider.value() for key,(slider,label) in self.controls.items()}
-        for key,(slider,label) in self.controls.items():label.setText(f"{slider.value():+d}")
+        for key,(slider,label) in self.controls.items():
+            label.setText(f"{slider.value():+d}")
         img=self.source.scaled(480,270,Qt.KeepAspectRatio,Qt.SmoothTransformation).convertToFormat(QImage.Format_RGB32)
         bright=values["Brightness"]*1.25
         contrast=1+values["Contrast"]/150
