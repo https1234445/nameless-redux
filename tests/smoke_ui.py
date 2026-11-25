@@ -19,6 +19,12 @@ for name in ("Redux Collection", "Overview", "Visuals Studio", "Theme Lab", "Sou
     assert window.stack.currentWidget() is window.pages[name], name
 window.navigate("Overview")
 assert window.page_title.text() == "Dashboard"
+# Premium hero is static, legible and paintable without an animation timer.
+from premium_hero import PremiumHero
+assert isinstance(window.hero, PremiumHero)
+assert window.hero.minimumHeight() >= 300
+assert not hasattr(window.hero, "_clock")
+
 assert window.effects_preview.base.width() > 0
 assert window.top_game_status is not None
 # Verify every visual slider changes the filtered half of before/after.
