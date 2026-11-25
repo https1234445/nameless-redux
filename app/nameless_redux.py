@@ -17,6 +17,7 @@ from redux_armory import CosmeticGarage
 from premium_hero import PremiumHero
 from redux_atlas import CosmeticAtlas
 from fps_lab import FPSLab
+from ping_lab import PingLab
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -195,7 +196,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.13.0-dev"
+VERSION = "3.14.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1504,6 +1505,14 @@ class ReduxWindow(QMainWindow):
         fps_open.clicked.connect(self.open_fps_lab)
         fps_layout.addWidget(fps_open)
         l.addWidget(fps_card)
+        ping_card, ping_layout = self.card(
+            "PING LAB  /  NETWORK STABILITY",
+            "Check public reference connections for delays and failures; "
+            "not a ROB RUN server or UDP packet-loss test.")
+        ping_open = QPushButton("OPEN PING LAB  /  CHECK CONNECTION")
+        ping_open.clicked.connect(self.open_ping_lab)
+        ping_layout.addWidget(ping_open)
+        l.addWidget(ping_card)
 
         steam_card, steam_layout = self.card("STEAM CONNECT  /  LIVE", "Find the installed game and launch it through Steam. No injection or game file modification.")
         self.steam_status = QLabel("Checking Steam installation…")
@@ -2106,6 +2115,10 @@ class ReduxWindow(QMainWindow):
             QTimer.singleShot(0, lambda: self.open_cosmetic_garage(pack, slot))
 
         CosmeticAtlas(self, on_select=open_selected).exec()
+
+    def open_ping_lab(self):
+        """Open safe connection diagnostics; no network settings are changed."""
+        PingLab(self).exec()
 
     def open_fps_lab(self):
         """Launch safe performance guidance without changing game or Windows settings."""
