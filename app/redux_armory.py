@@ -106,12 +106,19 @@ class CosmeticCanvas(QWidget):
         self.setMinimumSize(470, 380)
         self.pack = "SAKURA DREAM"
         self.slot = "vehicle"
+        self.reference_images = {}
         self.set_concept(pack, slot)
 
     def set_concept(self, pack, slot):
         if pack not in PACK_NAMES or slot not in SLOTS:
             raise ValueError("Unknown cosmetic concept")
         self.pack, self.slot = pack, slot
+        self.update()
+
+    def set_reference(self, slot, image):
+        if slot not in SLOTS or image.isNull():
+            raise ValueError("Invalid reference screenshot")
+        self.reference_images[slot] = image.scaled(1200, 900, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.update()
 
     def paintEvent(self, event):
@@ -132,7 +139,32 @@ class CosmeticCanvas(QWidget):
         p.end()
         return image
 
+    def draw_reference_concept(self, p):
+        """Preserve real screenshot geometry, overlay a transparent theme tint."""
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        style = PACK_STYLE[self.pack]
+        p.fillRect(0, 0, RENDER_W, RENDER_H, QColor(style["sky"]))
+        source = self.reference_images[self.slot]
+        scaled = source.scaled(RENDER_W, RENDER_H - 94,
+                               Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        x = (RENDER_W - scaled.width()) // 2
+        y = (RENDER_H - 94 - scaled.height()) // 2
+        p.drawImage(x, y, scaled)
+        p.fillRect(QRectF(x, y, scaled.width(), scaled.height()),
+                   tint(style["accent"], 45))
+        p.fillRect(0, RENDER_H - 94, RENDER_W, 94, QColor("#11152A"))
+        p.setPen(QColor(style["bright"]))
+        p.setFont(QFont("Segoe UI", 23, QFont.Bold))
+        p.drawText(30, RENDER_H - 54, self.pack + " / " + SLOT_TITLES[self.slot])
+        p.setPen(QColor("#E0E1EE"))
+        p.setFont(QFont("Segoe UI", 12))
+        p.drawText(30, RENDER_H - 25,
+                   "ROB RUN PLAYER SCREENSHOT / LOCAL CONCEPT OVERLAY / NOT IN-GAME")
+
     def draw_concept(self, p):
+        if self.slot in self.reference_images:
+            self.draw_reference_concept(p)
+            return
         p.setRenderHint(QPainter.Antialiasing)
         style = PACK_STYLE[self.pack]
         bg = QLinearGradient(0, 0, 1000, 620)
@@ -392,6 +424,8 @@ class CosmeticGarage(QDialog):
         row = QHBoxLayout()
         row.setSpacing(19)
         self.canvas = CosmeticCanvas(pack=initial_pack)
+        self.reference_paths = {}
+        self.load_references()
         row.addWidget(self.canvas, 3)
 
         side = QFrame()
@@ -440,6 +474,9 @@ class CosmeticGarage(QDialog):
         self.atlas_button = QPushButton("EXPLORE ALL 20 CONCEPTS")
         self.atlas_button.clicked.connect(self.open_atlas)
         buttons.addWidget(self.atlas_button)
+        self.reference_button = QPushButton("ADD ROB RUN SCREENSHOT")
+        self.reference_button.clicked.connect(self.import_reference)
+        buttons.addWidget(self.reference_button)
         self.png_button = QPushButton("EXPORT CONCEPT PNG")
         self.png_button.clicked.connect(self.export_png)
         buttons.addWidget(self.png_button)
@@ -463,7 +500,7 @@ class CosmeticGarage(QDialog):
 
         if self.focused:
             heading.setText(self.focused_pack + "  /  COSMETIC PREVIEWS")
-            caption.setText("Select a category to preview only this REDUX theme.")
+            caption.setText("Choose a category and add your ROB RUN screenshot. The theme overlays the REAL model.")
             self.category_select.hide()
             select_title.hide()
             subheading.hide()
@@ -521,6 +558,39 @@ class CosmeticGarage(QDialog):
                 border: 1px solid #666092; border-radius: 12px;
             }
         """)
+
+    def load_references(self):
+        """Only load previously selected local image paths; never scan game files."""
+        for slot in SLOTS:
+            filename = str(self._settings.value("cosmetic_references/" + slot, "") or "")
+            if filename and Path(filename).is_file():
+                image = QImage(filename)
+                if not image.isNull():
+                    self.reference_paths[slot] = filename
+                    self.canvas.set_reference(slot, image)
+
+    def import_reference(self):
+        slot = SLOTS[self.category_select.currentIndex()]
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Select your ROB RUN " + slot + " screenshot", "",
+            "Images (*.png *.jpg *.jpeg *.webp *.bmp)")
+        if not filename:
+            return
+        try:
+            if Path(filename).stat().st_size > 16 * 1024 * 1024:
+                raise ValueError("Screenshot must be under 16 MiB")
+            image = QImage(filename)
+            if image.isNull() or image.width() * image.height() > 24_000_000:
+                raise ValueError("Invalid or oversized screenshot")
+            self.canvas.set_reference(slot, image)
+            self.reference_paths[slot] = filename
+            self._settings.setValue("cosmetic_references/" + slot, filename)
+            self.update_preview()
+            self.status.setText(
+                "Real ROB RUN screenshot loaded for " + SLOT_TITLES[slot] +
+                ". Only a local preview overlay; no game files changed.")
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(self, "Screenshot error", str(exc))
 
     def loadout_slots(self):
         return {slot: self.slot_selects[slot].currentText() for slot in SLOTS}
