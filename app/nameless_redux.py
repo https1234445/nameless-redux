@@ -15,7 +15,7 @@ from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient, QRadialGradient, QImage, QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from redux_showroom import ReduxShowroom
-from redux_armory import CosmeticGarage
+from redux_armory import CosmeticGarage, CosmeticCanvas, COSMETIC_TITLES
 from premium_hero import PremiumHero
 from redux_atlas import CosmeticAtlas
 from fps_lab import FPSLab
@@ -2062,8 +2062,12 @@ class ReduxWindow(QMainWindow):
         showroom_intro.addWidget(atlas_button)
         showroom_intro.addStretch()
         layout.addLayout(showroom_intro)
+        # Cinematic gallery: four themes alongside a live selected concept.
+        gallery = QHBoxLayout()
+        gallery.setSpacing(12)
+        cards_column = QVBoxLayout()
         grid = QGridLayout()
-        grid.setSpacing(14)
+        grid.setSpacing(10)
         packs = [
             ("SAKURA DREAM", "Pink skies / cherry blossoms / soft soundscape", "#E9A3BB", "#704357", "Coral"),
             ("NEON NIGHT", "Purple neon / electric trails / synth atmosphere", "#A57AF4", "#39255A", "Deep Violet"),
@@ -2082,7 +2086,7 @@ class ReduxWindow(QMainWindow):
             inner.setContentsMargins(16, 16, 16, 18)
             inner.setSpacing(10)
             art = ReduxCover(name, accent, shadow)
-            art.setMinimumHeight(230)
+            art.setMinimumHeight(160)
             inner.insertWidget(0, art)
             number, tagline, mood = pack_features[name]
             edition = QLabel(number + "   /   ORIGINAL REDUX CONCEPT")
@@ -2108,7 +2112,7 @@ class ReduxWindow(QMainWindow):
             actions.addWidget(demo, 1)
             cosmetics = QPushButton("VIEW COSMETICS")
             cosmetics.clicked.connect(
-                lambda checked=False, n=name: self.open_cosmetic_garage(n))
+                lambda checked=False, n=name: self.select_gallery_pack(n))
             actions.addWidget(cosmetics, 1)
             inner.addLayout(actions)
 
@@ -2122,8 +2126,57 @@ class ReduxWindow(QMainWindow):
             compatibility.setObjectName("collectionDisclaimer")
             compatibility.setWordWrap(True)
             inner.addWidget(compatibility)
-            grid.addWidget(card, i // 2, i % 2)
-        layout.addLayout(grid)
+            grid.addWidget(card, 0, i)
+        cards_column.addLayout(grid)
+        gallery.addLayout(cards_column, 4)
+
+        detail = QFrame()
+        detail.setObjectName("reduxCollectionCard")
+        detail.setStyleSheet(
+            "QFrame#reduxCollectionCard { background: #121326;"
+            "border: 1px solid #65547E; border-radius: 14px; }")
+        detail.setMinimumWidth(290)
+        detail_layout = QVBoxLayout(detail)
+        detail_layout.setSpacing(10)
+        self.gallery_title = QLabel("HANAMI DRIFT")
+        self.gallery_title.setStyleSheet(
+            "font-size: 21px; font-weight: 900; color: #F5B6D8;")
+        detail_layout.addWidget(self.gallery_title)
+        self.gallery_subtitle = QLabel("SAKURA DREAM  /  VEHICLE CONCEPT")
+        self.gallery_subtitle.setObjectName("collectionEyebrow")
+        detail_layout.addWidget(self.gallery_subtitle)
+        self.gallery_canvas = CosmeticCanvas(pack="SAKURA DREAM", slot="vehicle")
+        self.gallery_canvas.setMinimumSize(1, 1)
+        self.gallery_canvas.setMaximumHeight(380)
+        detail_layout.addWidget(self.gallery_canvas, 1)
+        gallery_slots = QGridLayout()
+        gallery_slots.setSpacing(6)
+        self.gallery_slot_buttons = {}
+        for idx, (slot, label) in enumerate([
+            ("vehicle", "VEHICLE"), ("weapon", "WEAPON"),
+            ("mask", "MASK"), ("outfit", "OUTFIT"), ("backpack", "BACKPACK")]):
+            btn = QPushButton(label)
+            btn.setMinimumHeight(38)
+            btn.clicked.connect(
+                lambda checked=False, key=slot: self.select_gallery_slot(key))
+            gallery_slots.addWidget(btn, idx // 3, idx % 3)
+            self.gallery_slot_buttons[slot] = btn
+        detail_layout.addLayout(gallery_slots)
+        self.gallery_disclaimer = QLabel(
+            "NAMELESS ORIGINAL CONCEPT  /  NOT A ROB RUN ITEM  /  PREVIEW ONLY")
+        self.gallery_disclaimer.setObjectName("muted")
+        self.gallery_disclaimer.setWordWrap(True)
+        detail_layout.addWidget(self.gallery_disclaimer)
+        open_selected = QPushButton("VIEW SELECTED COSMETICS")
+        open_selected.clicked.connect(
+            lambda: self.open_cosmetic_garage(self.gallery_pack,
+                                             self.gallery_slot))
+        detail_layout.addWidget(open_selected)
+        gallery.addWidget(detail, 2)
+        self.gallery_pack = "SAKURA DREAM"
+        self.gallery_slot = "vehicle"
+        self.select_gallery_pack("SAKURA DREAM")
+        layout.addLayout(gallery)
         active = self.settings.value("collection/active", "")
         self.collection_active = QLabel(
             "ACTIVE NAMELESS LOOK  /  " + (active or "NONE SELECTED"))
@@ -2142,6 +2195,26 @@ class ReduxWindow(QMainWindow):
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setWidget(page)
         self.add_page("Redux Collection", scroll)
+
+    def select_gallery_pack(self, pack):
+        """Switch the right-hand live gallery without changing the game."""
+        if pack not in COSMETIC_TITLES:
+            return
+        self.gallery_pack = pack
+        self.select_gallery_slot(self.gallery_slot)
+
+    def select_gallery_slot(self, slot):
+        if slot not in COSMETIC_TITLES[self.gallery_pack]:
+            return
+        self.gallery_slot = slot
+        self.gallery_canvas.set_concept(self.gallery_pack, slot)
+        self.gallery_title.setText(COSMETIC_TITLES[self.gallery_pack][slot])
+        self.gallery_subtitle.setText(
+            self.gallery_pack + "  /  " + slot.upper() + " CONCEPT")
+        for key, button in self.gallery_slot_buttons.items():
+            button.setStyleSheet(
+                "font-weight: 800; background: " +
+                ("#8C477D;" if key == slot else "#302C50;"))
 
     def open_redux_showroom(self, name="SAKURA DREAM"):
         """Open a self-contained concept viewer; never interact with game files."""
