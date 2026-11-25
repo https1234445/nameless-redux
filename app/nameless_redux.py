@@ -1692,7 +1692,7 @@ class ReduxWindow(QMainWindow):
                 return
         bundled = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "assets" / "rob_run_preview.jpg"
         executable_dir = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
-        candidates = (bundled, executable_dir / "rob_run_preview.jpg", executable_dir / "images.jpg")
+        candidates = (bundled, executable_dir / "assets" / "rob_run_preview.jpg", executable_dir / "rob_run_preview.jpg", executable_dir / "images.jpg")
         for candidate in candidates:
             if candidate.is_file() and self.effects_preview.set_screenshot(QImage(str(candidate))):
                 self.preview_source.setText("ROB RUN • permanent reference image • preview only")
