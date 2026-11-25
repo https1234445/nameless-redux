@@ -77,8 +77,11 @@ jobs:
         shell: pwsh
         run: |
           $assets = @()
-          if (Test-Path "app/assets/rob_run_preview.jpg") {
-            $assets = @("--add-data", "app/assets/rob_run_preview.jpg;assets")
+          if (Test-Path "app/assets") {
+            $images = @(Get-ChildItem "app/assets" -File -Include *.jpg,*.jpeg,*.png -Recurse)
+            foreach ($image in $images) {
+              $assets += @("--add-data", "$($image.FullName);assets")
+            }
           }
           & pyinstaller --noconfirm --clean --onefile --windowed --name "NAMELESS REDUX" @assets app/nameless_redux.py
       - name: Build launcher
