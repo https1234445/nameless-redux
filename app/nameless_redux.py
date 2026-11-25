@@ -2289,6 +2289,21 @@ class ReduxWindow(QMainWindow):
             return
         self.gallery_slot = slot
         self.gallery_canvas.set_concept(self.gallery_pack, slot)
+        # The vehicle showcase must use the same bundled realistic artwork as
+        # its selected REDUX cover, never the old vector placeholder.
+        if slot == "vehicle":
+            filename = {
+                "SAKURA DREAM": "sakura_dream.jpg",
+                "NEON NIGHT": "neon_night.jpg",
+                "FROSTBITE": "frostbite.jpg",
+                "CRIMSON": "crimson.jpg",
+            }[self.gallery_pack]
+            for candidate in art_candidates(filename):
+                if candidate.is_file():
+                    image = QImage(str(candidate))
+                    if not image.isNull():
+                        self.gallery_canvas.set_reference("vehicle", image)
+                        break
         self.gallery_title.setText(COSMETIC_TITLES[self.gallery_pack][slot])
         self.gallery_subtitle.setText(
             self.gallery_pack + "  /  " + slot.upper() + " CONCEPT")
