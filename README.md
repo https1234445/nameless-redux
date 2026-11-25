@@ -6,6 +6,7 @@ NAMELESS is a desktop catalog of curated visual **concepts** for ROB RUN. The ma
 
 - Browse four themed concepts and preview their color direction in Visual Lab.
 - **LIVE REDUX SHOWROOM:** open a fully original interactive 16:9 scene for Sakura Dream, Neon Night, Frostbite or Crimson. Each scene has distinctive vector-drawn sky/environment, a concept weapon finish, animated ambient effects, and mouse-triggered impact particles. Try a synthesized original shot sound, toggle motion/audio, and export concept artwork as PNG. This runs only inside NAMELESS and never touches ROB RUN files.
+- **COSMETIC GARAGE:** 20 original vector cosmetic concepts across four worlds and five slots (weapons, vehicles, outfits, masks, backpacks). Compose a mixed cosmetic look by selecting a different theme per slot, inspect every item, export a PNG concept or a shareable NAMELESS-only JSON loadout, and import a saved loadout. The JSON format explicitly identifies previews and never contains a game installation action.
 - **ACTIVATE IN NAMELESS** applies a complete set of local preview settings with one click and remembers the selected look.
 - **EXPORT LOOK** writes a portable `.json` preset describing the NAMELESS look (not game assets).
 - Compare a real ROB RUN screenshot using before/after visual adjustments. The app attempts to load an official Steam screenshot or lets you select your own.
@@ -18,7 +19,7 @@ A REDUX is a curated **whole-game appearance pack**, not just a color filter. Th
 
 - **World and atmosphere:** skies, environments, scenery, particles and ambient effects.
 - **Weapons and projectiles:** weapon skins, muzzle/projectile visuals, themed effects.
-- **Vehicles:** car skins, colors, decorations and cosmetic details.
+- **Vehicles:** car skins, colors, decorations and cosmetic details (original NAMELESS concept preview available in Cosmetic Garage).
 - **Characters:** player skins and character appearance.
 - **Outfits:** costumes, clothing and wearable cosmetics.
 - **Accessories:** bags, masks and other cosmetic items.
@@ -53,10 +54,11 @@ Do not publish an untested development build as a stable release.
 
 ```bash
 python -m pip install PySide6 numpy
-python -m py_compile app/nameless_redux.py app/redux_showroom.py launcher.py
+python -m py_compile app/nameless_redux.py app/redux_showroom.py app/redux_armory.py launcher.py
 python tests/validate_packs.py
 QT_QPA_PLATFORM=offscreen python tests/smoke_ui.py
 QT_QPA_PLATFORM=offscreen python tests/showroom_smoke.py
+QT_QPA_PLATFORM=offscreen python tests/garage_smoke.py
 ```
 
 Windows GitHub Actions runs the above checks automatically.
