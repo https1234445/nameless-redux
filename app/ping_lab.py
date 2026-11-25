@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QThread, Signal, QSettings
+from lag_report import LagReportDialog
 from ping_history import (HISTORY_FORMAT, add_entry, make_entry,
                           validate_history, history_text)
 
@@ -169,6 +170,9 @@ class PingLab(QDialog):
         clear_history.clicked.connect(self.clear_history)
         history_buttons.addWidget(clear_history)
         root.addLayout(history_buttons)
+        report_button = QPushButton("CREATE ROB RUN LAG REPORT")
+        report_button.clicked.connect(self.open_lag_report)
+        root.addWidget(report_button)
         buttons = QHBoxLayout()
         self.export_button = QPushButton("EXPORT DIAGNOSTIC JSON")
         self.export_button.clicked.connect(self.export_report)
@@ -274,6 +278,14 @@ class PingLab(QDialog):
         self.worker = None
         self.start_button.setEnabled(True)
         self.endpoint.setEnabled(True)
+
+    def open_lag_report(self):
+        """Open local incident report, optionally attaching last public TCP check."""
+        reference = None
+        if self.last_result is not None and self.last_endpoint:
+            reference = {"endpoint": self.last_endpoint,
+                         "result": dict(self.last_result)}
+        LagReportDialog(self, reference=reference).exec()
 
     def export_report(self):
         if self.last_result is None:
