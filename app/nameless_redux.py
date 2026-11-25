@@ -728,6 +728,71 @@ class CrosshairPreview(QWidget):
 
 
 
+class FunctionalReferenceHome(QWidget):
+    """Exact approved Home artwork behind REAL Qt buttons, not click hotspots.
+
+    The screenshot is a visual skin. Navigation, launch and window controls
+    are individual QPushButtons with focus, keyboard and accessibility support.
+    """
+    def __init__(self, image_path, navigate, launch, parent=None):
+        super().__init__(parent)
+        self.image = QImage(str(image_path))
+        self.controls = []
+        for label, rect, action in (
+            ("Home", (316, 0, 135, 64), lambda: navigate("Overview")),
+            ("Redux Collection", (454, 0, 190, 64), lambda: navigate("World Reborn")),
+            ("Visual Lab", (648, 0, 150, 64), lambda: navigate("Visuals Studio")),
+            ("Gallery", (803, 0, 137, 64), lambda: navigate("Redux Collection")),
+            ("Settings", (944, 0, 140, 64), lambda: navigate("Settings")),
+            ("Launch ROB RUN", (1309, 0, 205, 64), launch),
+            ("Home sidebar", (15, 140, 270, 66), lambda: navigate("Overview")),
+            ("Redux Collection sidebar", (15, 214, 270, 65), lambda: navigate("World Reborn")),
+            ("Visual Lab sidebar", (15, 285, 270, 65), lambda: navigate("Visuals Studio")),
+            ("Gallery sidebar", (15, 355, 270, 65), lambda: navigate("Redux Collection")),
+            ("Settings sidebar", (15, 423, 270, 65), lambda: navigate("Settings")),
+            ("Crosshair Studio", (15, 490, 270, 65), lambda: navigate("Crosshair Studio")),
+            ("Launch ROB RUN main", (351, 429, 402, 72), launch),
+            ("Mod Manager", (780, 429, 271, 72), lambda: navigate("Game Center")),
+            ("Redux Collection card", (348, 588, 303, 273), lambda: navigate("World Reborn")),
+            ("Visual Lab card", (672, 588, 298, 273), lambda: navigate("Visuals Studio")),
+            ("Gallery card", (991, 588, 299, 273), lambda: navigate("Redux Collection")),
+            ("Settings card", (1310, 588, 302, 273), lambda: navigate("Settings")),
+        ):
+            button = QPushButton("", self)
+            button.setAccessibleName(label)
+            button.setToolTip(label)
+            button.setFocusPolicy(Qt.StrongFocus)
+            button.setCursor(Qt.PointingHandCursor)
+            button.setStyleSheet("QPushButton {background:transparent;border:0px;} QPushButton:focus {border:2px solid #FF72CB;border-radius:9px;}")
+            button.clicked.connect(action)
+            self.controls.append((button, rect))
+        self.setMinimumSize(800, 450)
+
+    def _scene_rect(self):
+        w, h = self.width(), self.height()
+        scale = min(w/1672, h/941)
+        sw, sh = round(1672*scale), round(941*scale)
+        return QRect((w-sw)//2, (h-sh)//2, sw, sh)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        scene = self._scene_rect()
+        for button, (x, y, w, h) in self.controls:
+            button.setGeometry(
+                scene.x()+round(x*scene.width()/1672),
+                scene.y()+round(y*scene.height()/941),
+                round(w*scene.width()/1672),
+                round(h*scene.height()/941))
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        p.fillRect(self.rect(), QColor("#090510"))
+        if not self.image.isNull():
+            p.drawImage(self._scene_rect(), self.image)
+        p.end()
+
+
 class HomeFeatureButton(QPushButton):
     """Native accessible button with a painted world preview and neon edge."""
     def __init__(self, symbol, heading, detail, image_name, parent=None):
@@ -1476,6 +1541,11 @@ class ReduxWindow(QMainWindow):
         l.addLayout(feature_grid, 4)
         l.addStretch(1)
         self.stat_values = []
+        # When bundled, the approved design is the actual Home background;
+        # controls remain native Qt widgets, not image click-coordinate hacks.
+        reference = Path(__file__).resolve().parent / "assets" / "home_full_reference.png"
+        if reference.is_file():
+            page = FunctionalReferenceHome(reference, self.navigate, self.launch_steam_game)
         self.add_page("Overview", page)
 
         # Visuals
