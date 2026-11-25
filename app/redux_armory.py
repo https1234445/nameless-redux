@@ -162,6 +162,38 @@ class CosmeticCanvas(QWidget):
                    "ROB RUN PLAYER SCREENSHOT / LOCAL CONCEPT OVERLAY / NOT IN-GAME")
 
     def draw_concept(self, p):
+        # Optional realistic per-pack concept artwork; never presented as
+        # an official game asset. Player screenshots take precedence.
+        if self.slot not in self.reference_images and self.slot == "vehicle":
+            art_names = {
+                "SAKURA DREAM": "sakura_dream.jpg",
+                "NEON NIGHT": "neon_night.jpg",
+                "FROSTBITE": "frostbite.jpg",
+                "CRIMSON": "crimson.jpg",
+            }
+            import sys
+            base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+            exe_dir = (Path(sys.executable).resolve().parent if getattr(
+                sys, "frozen", False) else Path(__file__).resolve().parent)
+            for root in (base / "assets", exe_dir / "assets"):
+                candidate = root / art_names[self.pack]
+                if candidate.is_file():
+                    image = QImage(str(candidate))
+                    if not image.isNull():
+                        p.fillRect(0, 0, RENDER_W, RENDER_H, QColor("#0D1123"))
+                        scaled = image.scaled(
+                            RENDER_W, RENDER_H - 94, Qt.KeepAspectRatio,
+                            Qt.SmoothTransformation)
+                        p.drawImage((RENDER_W-scaled.width())//2,
+                                    (RENDER_H-94-scaled.height())//2, scaled)
+                        p.setPen(QColor("#F5F0FF"))
+                        p.setFont(QFont("Segoe UI", 22, QFont.Bold))
+                        p.drawText(24, RENDER_H - 46,
+                                   self.pack + " / VEHICLE CONCEPT")
+                        p.setFont(QFont("Segoe UI", 12))
+                        p.drawText(24, RENDER_H - 22,
+                                   "AI-GENERATED CONCEPT / NOT AN IN-GAME SKIN")
+                        return
         if self.slot in self.reference_images:
             self.draw_reference_concept(p)
             return
