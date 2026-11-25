@@ -16,6 +16,8 @@ from pathlib import Path
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import (QBrush, QColor, QFont, QImage, QLinearGradient,
                           QPainter, QPen, QPolygonF, QRadialGradient)
+from redux_armory import CosmeticGarage
+
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QFileDialog,
                                QHBoxLayout, QLabel, QMessageBox, QPushButton,
                                QVBoxLayout, QWidget)
@@ -466,6 +468,9 @@ class ReduxShowroom(QDialog):
         self.save_button = QPushButton("SAVE CONCEPT PNG")
         self.save_button.clicked.connect(self.save_snapshot)
         actions.addWidget(self.save_button)
+        garage = QPushButton("COSMETIC GARAGE  ↗")
+        garage.clicked.connect(self.open_cosmetics)
+        actions.addWidget(garage)
         close_button = QPushButton("CLOSE")
         close_button.clicked.connect(self.accept)
         actions.addWidget(close_button)
@@ -544,6 +549,11 @@ class ReduxShowroom(QDialog):
             self.audio_check.setChecked(False)
             self.status.setText(
                 "Original audio unavailable on this device; visual demo still works.")
+
+    def open_cosmetics(self):
+        """Move from world effects to original cosmetic concept designs."""
+        garage = CosmeticGarage(self, initial_pack=self.canvas.pack)
+        garage.exec()
 
     def save_snapshot(self):
         filename, _ = QFileDialog.getSaveFileName(
