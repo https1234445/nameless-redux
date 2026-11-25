@@ -930,6 +930,35 @@ class ReduxCover(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         w, h = self.width(), self.height()
+        # Optional realistic concept art from the NAMELESS art pack.
+        # No fake screenshots: assets are labeled as generated concepts.
+        art_names = {
+            "SAKURA DREAM": "sakura_dream.jpg",
+            "NEON NIGHT": "neon_night.jpg",
+            "FROSTBITE": "frostbite.jpg",
+            "CRIMSON": "crimson.jpg",
+        }
+        art_name = art_names.get(self.name)
+        if art_name:
+            base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+            exe_dir = (Path(sys.executable).resolve().parent if getattr(
+                sys, "frozen", False) else Path(__file__).resolve().parent)
+            for root in (base / "assets", exe_dir / "assets"):
+                candidate = root / art_name
+                if candidate.is_file():
+                    picture = QImage(str(candidate))
+                    if not picture.isNull():
+                        scaled = picture.scaled(
+                            w, h, Qt.KeepAspectRatioByExpanding,
+                            Qt.SmoothTransformation)
+                        p.drawImage((w - scaled.width()) // 2,
+                                    (h - scaled.height()) // 2, scaled)
+                        p.fillRect(0, h - 66, w, 66, QColor(8, 9, 22, 165))
+                        p.setPen(QColor("#FFFFFF"))
+                        p.setFont(QFont("Segoe UI", 18, QFont.Bold))
+                        p.drawText(20, h - 24, self.name)
+                        p.end()
+                        return
         bg = QLinearGradient(0, 0, w, h)
         bg.setColorAt(0, self.shadow)
         bg.setColorAt(.55, self.accent.darker(180))
