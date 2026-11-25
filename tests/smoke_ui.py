@@ -93,14 +93,15 @@ for widget_type in (ShimmerText, AuroraCard, ReduxCover):
     for widget in window.findChildren(widget_type):
         timer = widget._motion if isinstance(widget, ReduxCover) else widget._clock
         assert timer.isActive(), widget_type.__name__
-# Every REDUX must have a visibly disabled install action until mod support is verified.
+# Each REDUX must explicitly communicate preview-only limitations.
 from PySide6.QtWidgets import QPushButton
-install_buttons = [b for b in window.findChildren(QPushButton)
-                   if b.text().startswith("INSTALL INTO ROB RUN")]
-assert len(install_buttons) == 4
-assert all(not button.isEnabled() for button in install_buttons)
-garage_buttons = [button for button in window.findChildren(QPushButton)
-                  if button.text().startswith("VIEW WEAPONS / CARS")]
+disclaimers = [label for label in collection.findChildren(QLabel)
+               if label.objectName() == "collectionDisclaimer"]
+assert len(disclaimers) == 4
+assert all("GAME INSTALL NOT AVAILABLE" in label.text() and
+           "NO GAME FILES CHANGED" in label.text() for label in disclaimers)
+garage_buttons = [button for button in collection.findChildren(QPushButton)
+                  if button.text() == "VIEW COSMETICS"]
 assert len(garage_buttons) == 4, "Every Redux has its own Cosmetic Garage entry"
 # A collection selection changes local preview only, without a game patch.
 from PySide6.QtWidgets import QMessageBox
