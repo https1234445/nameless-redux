@@ -1119,8 +1119,8 @@ class ReduxWindow(QMainWindow):
             scenic = QLabel()
             scenic.setObjectName("sidebarScenic")
             scenic.setPixmap(QPixmap.fromImage(sidebar_art).scaled(
-                192, 235, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-            scenic.setFixedHeight(235)
+                192, 125, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+            scenic.setFixedHeight(125)
             scenic.setAlignment(Qt.AlignCenter)
             scenic.setScaledContents(False)
             side.addWidget(scenic)
