@@ -4,7 +4,7 @@ Preview-only. Never edits ROB RUN or its assets.
 """
 from pathlib import Path
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QImage, QPixmap
+from PySide6.QtGui import QColor, QImage, QPixmap, QIcon
 from PySide6.QtWidgets import (QWidget, QLabel, QFrame, QPushButton, QVBoxLayout,
     QHBoxLayout, QGridLayout, QSlider, QScrollArea, QGraphicsDropShadowEffect)
 from art_pack import art_candidates
@@ -130,7 +130,7 @@ class WorldReborn(QWidget):
         hl=QVBoxLayout(hero)
         hl.setContentsMargins(12,10,12,11)
         hl.setSpacing(9)
-        self.hero_image=ArtLabel(height=300)
+        self.hero_image=ArtLabel(height=335)
         hl.addWidget(self.hero_image,1)
         self.hero_title=QLabel()
         self.hero_title.setObjectName("worldHeading")
@@ -145,6 +145,8 @@ class WorldReborn(QWidget):
         self.angle_buttons=[]
         for idx,label in enumerate(("FULL VIEW","DETAIL 1","DETAIL 2","DETAIL 3","DETAIL 4")):
             b=QPushButton(label)
+            b.setMinimumHeight(62)
+            b.setToolTip("Show "+label.lower()+" of the selected concept art")
             b.clicked.connect(lambda checked=False,i=idx:self.select_angle(i))
             angles.addWidget(b)
             self.angle_buttons.append(b)
@@ -197,6 +199,17 @@ class WorldReborn(QWidget):
             x,y,cw,ch=regions[index]
             image=image.copy(x,y,cw,ch)
         self.hero_image.set_image(image)
+        full=art(PACKS[self.pack][2])
+        if not full.isNull():
+            w,h=full.width(),full.height()
+            regions=((0,0,w,h),(0,0,w//2,h//2),(w//2,0,w//2,h//2),
+                     (0,h//2,w//2,h//2),(w//2,h//2,w//2,h//2))
+            for i,button in enumerate(self.angle_buttons):
+                x,y,cw,ch=regions[i]
+                thumb=full.copy(x,y,cw,ch).scaled(94,52,Qt.KeepAspectRatioByExpanding,Qt.SmoothTransformation)
+                button.setIcon(QIcon(QPixmap.fromImage(thumb)))
+                button.setIconSize(thumb.size())
+                button.setText("")
         for i,b in enumerate(self.angle_buttons):
             b.setStyleSheet("border:2px solid #FF8BD6;background:#532449;" if i==index else "")
 
