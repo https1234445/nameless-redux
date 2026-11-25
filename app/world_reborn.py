@@ -5,7 +5,7 @@ Preview-only. Never edits ROB RUN or its assets.
 from pathlib import Path
 from functools import lru_cache
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QImage, QPixmap, QIcon
+from PySide6.QtGui import QColor, QImage, QPixmap, QIcon, QPainter, QLinearGradient
 from PySide6.QtWidgets import (QWidget, QLabel, QFrame, QPushButton, QVBoxLayout,
     QHBoxLayout, QGridLayout, QSlider, QScrollArea, QGraphicsDropShadowEffect)
 from art_pack import art_candidates
@@ -32,6 +32,7 @@ def art(name):
     return QImage()
 
 class ArtLabel(QLabel):
+    """Cropped image that always fills its frame without stretching the car."""
     def __init__(self, image=None, height=160):
         super().__init__()
         self.image = image if image is not None else QImage()
@@ -50,10 +51,88 @@ class ArtLabel(QLabel):
                 self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
             left = max(0, (pix.width()-self.width())//2)
             top = max(0, (pix.height()-self.height())//2)
-            crop = pix.copy(left, top, self.width(), self.height())
-            self.setPixmap(crop)
+            self.setPixmap(pix.copy(left, top, self.width(), self.height()))
         else:
             self.setText("PREVIEW UNAVAILABLE")
+
+
+class WorldCard(QFrame):
+    """A selectable world card with artwork and a dark caption gradient."""
+    clicked = Signal()
+    def __init__(self, image, name, description):
+        super().__init__()
+        self.setObjectName("worldCard")
+        self.image = image
+        self.selected = False
+        self.setMinimumHeight(205)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setToolTip("Select " + name)
+        self.name = name
+        self.description = description
+    def set_image(self, image):
+        self.image = image
+        self.update()
+    def set_selected(self, selected):
+        self.selected = selected
+        self.update()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = self.rect().adjusted(3,3,-3,-3)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor("#15101C"))
+        p.drawRoundedRect(r, 12, 12)
+        p.save()
+        from PySide6.QtGui import QPainterPath, QFont
+        clip = QPainterPath()
+        clip.addRoundedRect(r, 12, 12)
+        p.setClipPath(clip)
+        if not self.image.isNull():
+            pix = QPixmap.fromImage(self.image).scaled(
+                r.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            x = r.x()-(pix.width()-r.width())//2
+            y = r.y()-(pix.height()-r.height())//2
+            p.drawPixmap(x,y,pix)
+        grad = QLinearGradient(0,r.top(),0,r.bottom())
+        grad.setColorAt(0.0,QColor(0,0,0,0))
+        grad.setColorAt(0.47,QColor(5,4,10,45))
+        grad.setColorAt(1.0,QColor(7,5,13,245))
+        p.fillRect(r,grad)
+        p.restore()
+        p.setPen(QColor("#FFFFFF"))
+        font = p.font()
+        font.setBold(True)
+        font.setPointSize(12)
+        p.setFont(font)
+        p.drawText(r.adjusted(12,0,-10,-44),Qt.AlignBottom|Qt.AlignLeft,self.name.title())
+        font.setBold(False)
+        font.setPointSize(9)
+        p.setFont(font)
+        p.setPen(QColor("#E6DAE7"))
+        p.drawText(r.adjusted(12,0,-12,-9),Qt.AlignBottom|Qt.AlignLeft|Qt.TextWordWrap,self.description)
+        if self.selected:
+            p.setPen(QColor("#FF89D3"))
+            p.setBrush(Qt.NoBrush)
+            from PySide6.QtGui import QPen
+            p.setPen(QPen(QColor("#FF89D3"),3))
+            p.drawRoundedRect(r,12,12)
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor("#E948A5"))
+            p.drawEllipse(r.right()-33,r.top()+8,25,25)
+            p.setPen(QColor("#FFFFFF"))
+            p.drawText(r.right()-33,r.top()+8,25,25,Qt.AlignCenter,"✓")
+        else:
+            from PySide6.QtGui import QPen
+            p.setPen(QPen(QColor("#67546B"),1))
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(r,12,12)
+        p.end()
 
 class WorldReborn(QWidget):
     """Reference-inspired collection screen. All actions remain NAMELESS-only."""
@@ -105,79 +184,83 @@ class WorldReborn(QWidget):
 
         top=QHBoxLayout()
         top.setSpacing(13)
-        root.addLayout(top,3)
+        root.addLayout(top,1)
         grid=QGridLayout()
-        grid.setSpacing(10)
+        grid.setSpacing(11)
         top.addLayout(grid,5)
         self.cards=[]
         self.card_covers=[]
         for idx,(name,description,filename,color) in enumerate(PACKS):
-            card=QFrame()
-            card.setObjectName("worldPanel")
-            cl=QVBoxLayout(card)
-            cl.setContentsMargins(6,6,6,9)
-            cl.setSpacing(5)
-            cover=ArtLabel(art(filename),145)
-            cl.addWidget(cover,1)
-            self.card_covers.append(cover)
-            label=QLabel(name.title())
-            label.setObjectName("worldPack")
-            cl.addWidget(label)
-            hint=QLabel(description)
-            hint.setObjectName("worldMuted")
-            hint.setWordWrap(True)
-            cl.addWidget(hint)
-            button=QPushButton("SELECT WORLD")
-            button.clicked.connect(lambda checked=False,i=idx:self.select_pack(i))
-            cl.addWidget(button)
+            card=WorldCard(art(filename),name,description)
+            card.clicked.connect(lambda i=idx:self.select_pack(i))
             grid.addWidget(card,idx//2,idx%2)
-            self.cards.append((card,button))
+            self.cards.append((card,card))
+            self.card_covers.append(card)
 
         hero=QFrame()
         hero.setObjectName("worldPanel")
-        top.addWidget(hero,8)
-        hl=QVBoxLayout(hero)
-        hl.setContentsMargins(12,10,12,11)
-        hl.setSpacing(9)
-        self.hero_image=ArtLabel(height=335)
-        hl.addWidget(self.hero_image,1)
+        top.addWidget(hero,10)
+        hero_row=QHBoxLayout(hero)
+        hero_row.setContentsMargins(9,9,9,9)
+        hero_row.setSpacing(12)
+        gallery=QVBoxLayout()
+        gallery.setSpacing(9)
+        hero_row.addLayout(gallery,7)
+        self.hero_image=ArtLabel(height=370)
+        gallery.addWidget(self.hero_image,1)
+        angles=QHBoxLayout()
+        angles.setSpacing(7)
+        gallery.addLayout(angles)
+        self.angle_buttons=[]
+        for idx,label in enumerate(("FULL VIEW","DETAIL 1","DETAIL 2","DETAIL 3","DETAIL 4")):
+            button=QPushButton(label)
+            button.setMinimumHeight(64)
+            button.setToolTip("Show "+label.lower()+" of selected concept art")
+            button.clicked.connect(lambda checked=False,i=idx:self.select_angle(i))
+            angles.addWidget(button)
+            self.angle_buttons.append(button)
+
+        info=QFrame()
+        info.setObjectName("worldInfo")
+        info.setMinimumWidth(188)
+        info.setMaximumWidth(260)
+        info.setStyleSheet("QFrame#worldInfo{background:#100B15;border:0;border-radius:9px;}")
+        hero_row.addWidget(info,3)
+        hl=QVBoxLayout(info)
+        hl.setContentsMargins(10,12,10,12)
+        hl.setSpacing(12)
         self.hero_title=QLabel()
         self.hero_title.setObjectName("worldHeading")
+        self.hero_title.setWordWrap(True)
+        self.hero_title.setStyleSheet("color:#FFACDF;font-size:25px;font-weight:800;")
         hl.addWidget(self.hero_title)
+        tag=QLabel("✿  SIGNATURE REDUX")
+        tag.setStyleSheet("color:#FFE2F1;font-size:11px;")
+        hl.addWidget(tag)
         self.hero_desc=QLabel()
         self.hero_desc.setObjectName("worldMuted")
         self.hero_desc.setWordWrap(True)
         hl.addWidget(self.hero_desc)
-        angles=QHBoxLayout()
-        angles.setSpacing(6)
-        hl.addLayout(angles)
-        self.angle_buttons=[]
-        for idx,label in enumerate(("FULL VIEW","DETAIL 1","DETAIL 2","DETAIL 3","DETAIL 4")):
-            b=QPushButton(label)
-            b.setMinimumHeight(62)
-            b.setToolTip("Show "+label.lower()+" of the selected concept art")
-            b.clicked.connect(lambda checked=False,i=idx:self.select_angle(i))
-            angles.addWidget(b)
-            self.angle_buttons.append(b)
-        actions=QHBoxLayout()
-        hl.addLayout(actions)
+        hl.addSpacing(12)
         preview=QPushButton("▷  PREVIEW HERE")
         preview.setObjectName("worldPrimary")
-        preview.clicked.connect(lambda checked=False: self.open_collection.emit(PACKS[self.pack][0]))
-        actions.addWidget(preview,2)
-        cosmetics=QPushButton("COSMETICS")
-        cosmetics.clicked.connect(lambda:self.open_cosmetics.emit(PACKS[self.pack][0]))
-        actions.addWidget(cosmetics,1)
-        apply=QPushButton("✓  ACTIVATE IN NAMELESS")
-        apply.clicked.connect(lambda:self.apply_look.emit(PACKS[self.pack][0]))
-        hl.addWidget(apply)
+        preview.clicked.connect(lambda checked=False:self.open_collection.emit(PACKS[self.pack][0]))
+        hl.addWidget(preview)
+        cosmetics=QPushButton("VIEW COSMETICS")
+        cosmetics.clicked.connect(lambda checked=False:self.open_cosmetics.emit(PACKS[self.pack][0]))
+        hl.addWidget(cosmetics)
         for caption in ("✓  Custom Livery", "✓  Unique Atmosphere",
                         "✓  Matching Visuals", "✓  Preview Ready"):
             item=QLabel(caption)
-            item.setStyleSheet("color:#EAB5DB;font-size:12px;padding-left:8px;")
+            item.setStyleSheet("color:#F4B6DE;font-size:12px;padding:2px 0;")
             hl.addWidget(item)
-        disclaimer=QLabel("CONCEPT PREVIEW ONLY  •  NO ROB RUN FILES CHANGED")
+        hl.addStretch()
+        apply=QPushButton("✓  ACTIVATE IN NAMELESS")
+        apply.clicked.connect(lambda checked=False:self.apply_look.emit(PACKS[self.pack][0]))
+        hl.addWidget(apply)
+        disclaimer=QLabel("CONCEPT ONLY • ROB RUN UNCHANGED")
         disclaimer.setObjectName("worldMuted")
+        disclaimer.setWordWrap(True)
         hl.addWidget(disclaimer)
 
         # Visual Lab is a separate workspace page, not embedded in World Reborn.
@@ -196,13 +279,10 @@ class WorldReborn(QWidget):
         self.angle=0
         name,desc,filename,color=PACKS[index]
         self.hero_title.setText(name)
-        self.hero_desc.setText("SIGNATURE REDUX  /  "+desc)
+        self.hero_desc.setText(desc)
         for i,(card,button) in enumerate(self.cards):
             active=i==index
-            card.setStyleSheet("QFrame#worldPanel {background:#1B1120;border:"+
-                ("2px solid "+color if active else "1px solid #51394F")+
-                ";border-radius:13px;}")
-            button.setText("✓ SELECTED" if active else "SELECT WORLD")
+            card.set_selected(active)
         self.select_angle(0)
 
     def select_angle(self,index):
