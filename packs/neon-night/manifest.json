@@ -38,6 +38,30 @@
       "label": "Neon hit sparks",
       "type": "particles",
       "status": "design"
+    },
+    {
+      "id": "vehicle",
+      "label": "Afterdark GT vehicle finish",
+      "type": "vehicle_skins",
+      "status": "design"
+    },
+    {
+      "id": "outfit",
+      "label": "Night Circuit outfit",
+      "type": "outfits",
+      "status": "design"
+    },
+    {
+      "id": "mask",
+      "label": "Spectrum Visor mask",
+      "type": "masks",
+      "status": "design"
+    },
+    {
+      "id": "backpack",
+      "label": "Echo Core backpack",
+      "type": "backpacks",
+      "status": "design"
     }
   ],
   "performance": {
@@ -53,5 +77,16 @@
     "no_memory_injection": true,
     "no_asset_patching": true
   },
-  "license": "Original art and audio required; do not redistribute ROB RUN assets"
+  "license": "Original art and audio required; do not redistribute ROB RUN assets",
+  "cosmetic_garage": {
+    "preview": "original-qt-vector-concept",
+    "mixable_slots": [
+      "weapon",
+      "vehicle",
+      "outfit",
+      "mask",
+      "backpack"
+    ],
+    "game_asset_files_included": false
+  }
 }
