@@ -1412,9 +1412,13 @@ class ReduxWindow(QMainWindow):
         self.build_collection()
         # The approved 1672x941 screenshot skins the ENTIRE Home window,
         # including the sidebar and top bar. Each action is a real Qt button.
-        reference = Path(__file__).resolve().parent / "assets" / "home_full_reference.png"
+        reference = next((p for p in (
+            Path(sys.executable).resolve().parent / "home_full_reference.png",
+            Path(__file__).resolve().parent / "assets" / "home_full_reference.png",
+            Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)) / "home_full_reference.png"
+        ) if p.is_file()), None)
         self.exact_home = None
-        if reference.is_file():
+        if reference is not None:
             self.exact_home = FunctionalReferenceHome(
                 reference, self.navigate, self.launch_steam_game, self.centralWidget())
             self.exact_home.setGeometry(self.centralWidget().rect())
