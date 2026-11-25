@@ -1062,22 +1062,22 @@ class ReduxWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(224)
+        sidebar.setFixedWidth(286)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(14, 25, 14, 18)
-        side.setSpacing(10)
+        side.setContentsMargins(15, 17, 15, 13)
+        side.setSpacing(6)
 
-        brand = ShimmerText("N E M E L I S")
+        brand = ShimmerText("NAMELESS REDUX")
         brand.setObjectName("brand")
         side.addWidget(brand)
-        sub = QLabel("R E D U X   /   S A K U R A")
+        sub = QLabel("WORLD REBORN  •  SAKURA EDITION")
         sub.setObjectName("subbrand")
         side.addWidget(sub)
-        side.addSpacing(28)
+        side.addSpacing(12)
         nav_label = QLabel("WORKSPACE")
         nav_label.setObjectName("navSection")
         side.addWidget(nav_label)
-        side.addSpacing(8)
+        side.addSpacing(4)
 
         self.stack = QStackedWidget()
         self.stack.setObjectName("pageStack")
@@ -1096,11 +1096,11 @@ class ReduxWindow(QMainWindow):
         ]
         for name, glyph in nav_items:
             if name in ("Sound Library", "Game Center"):
-                side.addSpacing(17)
+                side.addSpacing(9)
                 group = QLabel("TOOLS" if name == "Sound Library" else "SYSTEM")
                 group.setObjectName("navSection")
                 side.addWidget(group)
-                side.addSpacing(6)
+                side.addSpacing(3)
             btn = GlowButton(f"{glyph}    {name}")
             btn.setObjectName("nav")
             btn.setCheckable(True)
@@ -1120,8 +1120,8 @@ class ReduxWindow(QMainWindow):
             self.sidebar_scenic = scenic
             scenic.setObjectName("sidebarScenic")
             scenic.setPixmap(QPixmap.fromImage(sidebar_art).scaled(
-                192, 125, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-            scenic.setFixedHeight(125)
+                256, 175, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+            scenic.setFixedHeight(175)
             scenic.setAlignment(Qt.AlignCenter)
             scenic.setScaledContents(False)
             side.addWidget(scenic)
@@ -1132,7 +1132,7 @@ class ReduxWindow(QMainWindow):
         content = AmbientSurface()
         content.setObjectName("contentSurface")
         content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(20, 16, 20, 18)
+        content_layout.setContentsMargins(12, 12, 12, 12)
         content_layout.setSpacing(11)
         header = QHBoxLayout()
         self.page_title = QLabel("Overview")
@@ -2307,7 +2307,7 @@ class ReduxWindow(QMainWindow):
             image = world_art("sakura_dream.jpg")
             if not image.isNull():
                 self.sidebar_scenic.setPixmap(QPixmap.fromImage(image).scaled(
-                    192, 125, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+                    256, 175, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
         # A new real preview is only loaded if the player has not already
         # selected their own screenshot, which must take precedence.
         if not str(self.settings.value("preview/screenshot", "") or ""):
