@@ -2112,7 +2112,11 @@ class ReduxWindow(QMainWindow):
             actions.addWidget(demo, 1)
             cosmetics = QPushButton("VIEW COSMETICS")
             cosmetics.clicked.connect(
+                lambda checked=False, n=name: self.open_cosmetic_garage(n))
+            preview_here = QPushButton("PREVIEW HERE")
+            preview_here.clicked.connect(
                 lambda checked=False, n=name: self.select_gallery_pack(n))
+            inner.addWidget(preview_here)
             actions.addWidget(cosmetics, 1)
             inner.addLayout(actions)
 
