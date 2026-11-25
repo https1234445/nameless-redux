@@ -9,6 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
 
 from PySide6.QtWidgets import QApplication, QFileDialog
+from PySide6.QtGui import QImage, QColor
 from redux_armory import (COSMETIC_TITLES, FORMAT, PACK_NAMES, SLOTS,
                           CosmeticCanvas, CosmeticGarage, build_loadout_payload,
                           validate_loadout_payload)
@@ -30,6 +31,19 @@ with tempfile.TemporaryDirectory() as temp:
             assert target.stat().st_size > 3500, (theme, slot)
             canvas.close()
     assert len(list(directory.glob("*.png"))) == 20
+
+    # A genuine screenshot can be used as a stable base for all four overlays.
+    reference = QImage(900, 520, QImage.Format_RGB32)
+    reference.fill(QColor("#86715F"))
+    screenshots = []
+    for pack in PACK_NAMES:
+        canvas = CosmeticCanvas(pack=pack, slot="vehicle")
+        canvas.set_reference("vehicle", reference)
+        shot = canvas.snapshot()
+        screenshots.append(shot.pixelColor(500, 300).rgba())
+        assert not shot.isNull() and shot.width() == 1000
+        canvas.close()
+    assert len(set(screenshots)) == 4, "Themes should produce distinct overlays"
 
     # Mix independently instead of blindly applying one color palette.
     mixed = dict(zip(SLOTS, (
