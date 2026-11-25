@@ -1,3 +1,7 @@
+## PING LAB history (3.15 DEV)
+
+PING LAB now keeps up to 60 **local-only** reference TCP connection checks, shows timestamps, median connection times, connection failures and connect-time variation, and compares the latest two checks against the **same reference endpoint**. History can be exported as JSON or deleted with confirmation. It does not collect ROB RUN network packets, measure actual UDP packet loss, diagnose DDoS, or modify network settings. Run the new offline history smoke test with `python tests/ping_history_smoke.py`.
+
 # NAMELESS REDUX — ROB RUN Edition
 
 NAMELESS is a desktop catalog of curated visual **concepts** for ROB RUN. The main screen is **Redux Collection**, with Sakura Dream, Neon Night, Frostbite, and Crimson.
