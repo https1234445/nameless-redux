@@ -1,5 +1,6 @@
 from ui_controls import ClickOnlyComboBox
 from startup_brand import app_icon, startup_splash
+from art_pack import art_candidates, import_art_pack
 import sys
 import json
 import hashlib
@@ -943,8 +944,7 @@ class ReduxCover(QWidget):
             base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
             exe_dir = (Path(sys.executable).resolve().parent if getattr(
                 sys, "frozen", False) else Path(__file__).resolve().parent)
-            for root in (base / "assets", exe_dir / "assets"):
-                candidate = root / art_name
+            for candidate in art_candidates(art_name):
                 if candidate.is_file():
                     picture = QImage(str(candidate))
                     if not picture.isNull():
@@ -1694,7 +1694,7 @@ class ReduxWindow(QMainWindow):
                 return
         bundled = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "assets" / "rob_run_preview.jpg"
         executable_dir = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
-        candidates = (bundled, executable_dir / "assets" / "rob_run_preview.jpg", executable_dir / "rob_run_preview.jpg", executable_dir / "images.jpg")
+        candidates = (*art_candidates("rob_run_preview.jpg"), bundled, executable_dir / "rob_run_preview.jpg", executable_dir / "images.jpg")
         for candidate in candidates:
             if candidate.is_file() and self.effects_preview.set_screenshot(QImage(str(candidate))):
                 self.preview_source.setText("ROB RUN • permanent reference image • preview only")
@@ -2048,6 +2048,10 @@ class ReduxWindow(QMainWindow):
         performance_note.setObjectName("muted")
         performance_note.setWordWrap(True)
         layout.addWidget(performance_note)
+        import_art_button = QPushButton("IMPORT REALISTIC REDUX ART PACK  /  ZIP")
+        import_art_button.setObjectName("primaryAction")
+        import_art_button.clicked.connect(self.install_redux_art_pack)
+        layout.addWidget(import_art_button)
         showroom_intro = QHBoxLayout()
         showroom_button = GlowButton("OPEN INTERACTIVE REDUX SHOWROOM   ↗")
         showroom_button.setObjectName("primaryAction")
@@ -2201,6 +2205,28 @@ class ReduxWindow(QMainWindow):
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setWidget(page)
         self.add_page("Redux Collection", scroll)
+
+    def install_redux_art_pack(self):
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Import NAMELESS REDUX concept art", "", "ZIP archives (*.zip)")
+        if not filename:
+            return
+        try:
+            count = import_art_pack(filename)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Art pack import failed", str(exc))
+            return
+        for cover in self.findChildren(ReduxCover):
+            cover.update()
+        self.gallery_canvas.update()
+        # A new real preview is only loaded if the player has not already
+        # selected their own screenshot, which must take precedence.
+        if not str(self.settings.value("preview/screenshot", "") or ""):
+            self.load_initial_screenshot()
+        QMessageBox.information(
+            self, "REDUX ART INSTALLED",
+            f"{count} concept images imported. All four REDUX previews are ready. "
+            "This only changes NAMELESS; ROB RUN is untouched.")
 
     def select_gallery_pack(self, pack):
         """Switch the right-hand live gallery without changing the game."""
