@@ -15,6 +15,7 @@ from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from redux_showroom import ReduxShowroom
 from redux_armory import CosmeticGarage
 from premium_hero import PremiumHero
+from redux_atlas import CosmeticAtlas
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -2091,8 +2092,6 @@ class ReduxWindow(QMainWindow):
 
     def open_redux_atlas(self):
         """Open all twenty original concept artworks in a single gallery."""
-        from redux_atlas import CosmeticAtlas
-
         def open_selected(pack, slot):
             # Open the garage after the atlas closes, avoiding nested modal loops.
             QTimer.singleShot(0, lambda: self.open_cosmetic_garage(pack, slot))
