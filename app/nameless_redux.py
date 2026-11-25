@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from collections import Counter
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve, Property, QTimer, QPoint
+from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve, Property, QTimer, QPoint, QEvent
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient, QRadialGradient, QImage, QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from redux_showroom import ReduxShowroom
@@ -1144,6 +1144,8 @@ class ReduxWindow(QMainWindow):
 
         self.build_pages()
         self.build_collection()
+        # Wheel must scroll the page regardless of the widget under the pointer.
+        QApplication.instance().installEventFilter(self)
         self.apply_theme_colors()
         self.apply_style()
         self.load_settings()
@@ -1152,6 +1154,28 @@ class ReduxWindow(QMainWindow):
         self.steam_timer.start()
         QTimer.singleShot(500, self.refresh_steam_status)
         QTimer.singleShot(900, self.load_initial_screenshot)
+
+    def eventFilter(self, watched, event):
+        # Intercept wheel input before combo boxes, sliders and preview widgets
+        # can consume it. Route it to the visible page's vertical scrollbar.
+        if event.type() == QEvent.Wheel and isinstance(watched, QWidget):
+            page = self.stack.currentWidget()
+            if isinstance(page, QScrollArea) and (
+                    watched is page or page.isAncestorOf(watched)):
+                from PySide6.QtWidgets import QScrollBar
+                if isinstance(watched, QScrollBar):
+                    return False
+                bar = page.verticalScrollBar()
+                delta = event.pixelDelta().y()
+                if delta:
+                    step = -delta
+                else:
+                    step = -round(event.angleDelta().y() / 120 * 75)
+                if step:
+                    bar.setValue(bar.value() + step)
+                    event.accept()
+                    return True
+        return super().eventFilter(watched, event)
 
     def card(self, title, subtitle=None):
         frame = AuroraCard()
@@ -1298,6 +1322,9 @@ class ReduxWindow(QMainWindow):
         preset_btn.clicked.connect(self.apply_effect_preset)
         effects_layout.addWidget(preset_btn)
         self.effect_sliders = {}
+        self.effect_feedback = QLabel("Adjust ANY control to update AFTER; BEFORE remains original.")
+        self.effect_feedback.setObjectName("accent")
+        effects_layout.addWidget(self.effect_feedback)
         for key, label, low, high, initial in [
             ("brightness", "BRIGHTNESS", -50, 50, 0),
             ("contrast", "CONTRAST", 0, 200, 100),
@@ -2111,18 +2138,15 @@ class ReduxWindow(QMainWindow):
 
             actions = QHBoxLayout()
             actions.setSpacing(8)
-            demo = QPushButton("EXPLORE WORLD   ↗")
+            demo = QPushButton("PREVIEW HERE")
             demo.setObjectName("primaryAction")
             demo.clicked.connect(
-                lambda checked=False, n=name: self.open_redux_showroom(n))
+                lambda checked=False, n=name: self.select_gallery_pack(n))
             actions.addWidget(demo, 1)
             cosmetics = QPushButton("VIEW COSMETICS")
             cosmetics.clicked.connect(
                 lambda checked=False, n=name: self.open_cosmetic_garage(n))
-            preview_here = QPushButton("PREVIEW HERE")
-            preview_here.clicked.connect(
-                lambda checked=False, n=name: self.select_gallery_pack(n))
-            inner.addWidget(preview_here)
+
             actions.addWidget(cosmetics, 1)
             inner.addLayout(actions)
 
@@ -2136,16 +2160,16 @@ class ReduxWindow(QMainWindow):
             compatibility.setObjectName("collectionDisclaimer")
             compatibility.setWordWrap(True)
             inner.addWidget(compatibility)
-            grid.addWidget(card, 0, i)
+            grid.addWidget(card, i // 2, i % 2)
         cards_column.addLayout(grid)
-        gallery.addLayout(cards_column, 4)
+        gallery.addLayout(cards_column, 3)
 
         detail = QFrame()
         detail.setObjectName("reduxCollectionCard")
         detail.setStyleSheet(
             "QFrame#reduxCollectionCard { background: #121326;"
             "border: 1px solid #65547E; border-radius: 14px; }")
-        detail.setMinimumWidth(290)
+        detail.setMinimumWidth(320)
         detail_layout = QVBoxLayout(detail)
         detail_layout.setSpacing(10)
         self.gallery_title = QLabel("HANAMI DRIFT")
@@ -2157,7 +2181,8 @@ class ReduxWindow(QMainWindow):
         detail_layout.addWidget(self.gallery_subtitle)
         self.gallery_canvas = CosmeticCanvas(pack="SAKURA DREAM", slot="vehicle")
         self.gallery_canvas.setMinimumSize(1, 1)
-        self.gallery_canvas.setMaximumHeight(380)
+        self.gallery_canvas.setMinimumHeight(330)
+        self.gallery_canvas.setMaximumHeight(430)
         detail_layout.addWidget(self.gallery_canvas, 1)
         gallery_slots = QGridLayout()
         gallery_slots.setSpacing(6)
@@ -2536,6 +2561,9 @@ class ReduxWindow(QMainWindow):
     def update_effects_preview(self):
         values = {key: slider.value() for key, slider in self.effect_sliders.items()}
         self.effects_preview.apply_effects(**values)
+        self.effects_preview.compare_enabled = True
+        self.compare_check.setChecked(True)
+        self.effect_feedback.setText("AFTER  /  " + "  •  ".join(f"{k.upper()} {v}" for k, v in values.items()))
         # Every adjustment updates the AFTER half while BEFORE stays original.
         self.effects_preview.flush_effects()
 
