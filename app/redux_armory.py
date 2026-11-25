@@ -434,6 +434,9 @@ class CosmeticGarage(QDialog):
         layout.addLayout(row, 1)
 
         buttons = QHBoxLayout()
+        self.atlas_button = QPushButton("EXPLORE ALL 20 CONCEPTS")
+        self.atlas_button.clicked.connect(self.open_atlas)
+        buttons.addWidget(self.atlas_button)
         self.png_button = QPushButton("EXPORT CONCEPT PNG")
         self.png_button.clicked.connect(self.export_png)
         buttons.addWidget(self.png_button)
@@ -529,6 +532,19 @@ class CosmeticGarage(QDialog):
             self._restoring = False
         self.update_preview()
         self.save_local_loadout()
+
+    def open_atlas(self):
+        """Browse all 20 concepts and jump to a selection in this garage."""
+        from redux_atlas import CosmeticAtlas
+
+        def select_concept(pack, slot):
+            self.category_select.setCurrentIndex(SLOTS.index(slot))
+            self.slot_selects[slot].setCurrentText(pack)
+            self.update_preview()
+            self.status.setText(
+                "Atlas concept selected for local preview. ROB RUN remains unchanged.")
+
+        CosmeticAtlas(self, on_select=select_concept).exec()
 
     def export_png(self):
         filename, _ = QFileDialog.getSaveFileName(
