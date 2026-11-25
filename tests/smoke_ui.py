@@ -26,11 +26,21 @@ headlines = [w.text() for w in collection.findChildren(QLabel)
              if w.objectName() == "collectionHeadline"]
 assert set(headlines) == {"PETAL BLOOM", "ELECTRIC CITY", "ZERO DEGREE", "BURNING HORIZON"}
 assert len([b for b in collection.findChildren(QPushButton)
-            if b.text() == "EXPLORE WORLD   ↗"]) == 4
+            if b.text() == "PREVIEW HERE"]) == 4
 assert len([b for b in collection.findChildren(QPushButton)
             if b.text() == "VIEW COSMETICS"]) == 4
 assert len([b for b in collection.findChildren(QPushButton)
             if b.text() == "APPLY LOOK TO NAMELESS"]) == 4
+
+# All preview buttons must change the selected pack, not open a wrong default.
+from PySide6.QtWidgets import QPushButton
+preview_buttons = [b for b in collection.findChildren(QPushButton)
+                   if b.text() == "PREVIEW HERE"]
+assert len(preview_buttons) == 4
+for button, pack in zip(preview_buttons, (
+        "SAKURA DREAM", "NEON NIGHT", "FROSTBITE", "CRIMSON")):
+    button.click()
+    assert window.gallery_pack == pack, pack
 
 # Cinematic right-side gallery switches all four REDUX packs and five categories.
 from redux_armory import COSMETIC_TITLES, SLOTS
@@ -68,6 +78,7 @@ for key, value in (("brightness", 30), ("contrast", 145),
     window.effects_preview.flush_effects()
     assert window.effects_preview.filtered != original, key
     assert window.effects_preview.base == original, "before must remain original"
+    assert key.upper() in window.effect_feedback.text(), key
 # A custom screenshot survives startup and is not replaced by a pending Steam response.
 import tempfile
 with tempfile.TemporaryDirectory() as preview_dir:
