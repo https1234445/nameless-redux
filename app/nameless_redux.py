@@ -728,6 +728,48 @@ class CrosshairPreview(QWidget):
 
 
 
+class ReferenceHome(QWidget):
+    """Pixel-faithful Home image with working transparent click regions.
+
+    The image is an optional user-provided reference asset, kept separate from
+    car/world art. On missing asset, the regular Qt Home remains functional.
+    """
+    def __init__(self, image_path, navigate, launch):
+        super().__init__()
+        self.image = QImage(str(image_path))
+        self.go = navigate
+        self.launch = launch
+        self.setMinimumHeight(440)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        p.fillRect(self.rect(), QColor("#0B0712"))
+        if not self.image.isNull():
+            p.drawImage(self.rect(), self.image)
+        p.end()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() != Qt.LeftButton:
+            return super().mouseReleaseEvent(event)
+        x = event.position().x() * 1348 / max(1, self.width())
+        y = event.position().y() * 868 / max(1, self.height())
+        if 350 < y < 465 and 20 < x < 470:
+            self.launch()
+        elif 350 < y < 465 and 470 < x < 795:
+            self.go("Game Center")
+        elif 515 < y < 840:
+            if x < 350:
+                self.go("World Reborn")
+            elif x < 690:
+                self.go("Visuals Studio")
+            elif x < 1025:
+                self.go("Redux Collection")
+            else:
+                self.go("Settings")
+
+
 class HomeScene(QWidget):
     """Home hero uses the existing approved car art, never a new car drawing."""
     def __init__(self, parent=None):
@@ -1413,6 +1455,13 @@ class ReduxWindow(QMainWindow):
         l.addLayout(feature_grid, 4)
         l.addStretch(1)
         self.stat_values = []
+        home_asset = next((p for p in (
+            Path(sys.executable).resolve().parent / "home_reference.jpg",
+            Path(__file__).resolve().parent / "assets" / "home_reference.jpg",
+            Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation)) / "home_reference.jpg"
+        ) if p.is_file()), None)
+        if home_asset is not None:
+            page = ReferenceHome(home_asset, self.navigate, self.launch_steam_game)
         self.add_page("Overview", page)
 
         # Visuals
