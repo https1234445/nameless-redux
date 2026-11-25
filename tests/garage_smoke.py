@@ -85,6 +85,16 @@ with tempfile.TemporaryDirectory() as temp:
         QFileDialog.getSaveFileName = original_dialog
     garage.close()
 
+    # Opening a named REDUX must ignore any previously mixed saved loadout.
+    focused = CosmeticGarage(initial_pack="CRIMSON", focused=True)
+    assert focused.focused_pack == "CRIMSON"
+    assert len(focused.category_buttons) == 5
+    for index, slot in enumerate(SLOTS):
+        focused.category_buttons[slot].click()
+        assert focused.canvas.pack == "CRIMSON"
+        assert focused.canvas.slot == slot
+    focused.close()
+
     # A new garage instance must restore all five selections from QSettings.
     reopened = CosmeticGarage(initial_pack="CRIMSON")
     assert reopened.loadout_slots() == mixed
