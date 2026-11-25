@@ -1977,7 +1977,7 @@ class ReduxWindow(QMainWindow):
         layout.setSpacing(18)
         layout.addLayout(self.heading(
             "REDUX COLLECTION",
-            "Curated concepts • optimized assets and measured FPS are required before game installation."))
+            "Four original worlds • 20 cosmetic concepts • mix-and-match garage • performance-first design."))
         performance_note = QLabel(
             "PERFORMANCE FIRST  /  Future game packs must offer FPS-friendly assets, "
             "reduced particle load, and tested compatibility. No FPS boost is claimed yet.")
@@ -2021,6 +2021,12 @@ class ReduxWindow(QMainWindow):
             features.setWordWrap(True)
             features.setObjectName("accent")
             inner.addWidget(features)
+            cosmetics_detail = QLabel(
+                "COSMETIC GARAGE  /  Matching car • outfit • face mask • "
+                "backpack • weapon finish")
+            cosmetics_detail.setObjectName("muted")
+            cosmetics_detail.setWordWrap(True)
+            inner.addWidget(cosmetics_detail)
             compatibility = QLabel(
                 "GAME INSTALL: UNAVAILABLE • Preview-only concept. "
                 "A verified supported installation method is required.")
