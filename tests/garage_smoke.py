@@ -85,5 +85,20 @@ with tempfile.TemporaryDirectory() as temp:
         QFileDialog.getSaveFileName = original_dialog
     garage.close()
 
+    # A new garage instance must restore all five selections from QSettings.
+    reopened = CosmeticGarage(initial_pack="CRIMSON")
+    assert reopened.loadout_slots() == mixed
+    reopened.close()
+
+    # A corrupted setting must be ignored and removed without breaking the UI.
+    reopened._settings.setValue("cosmetic_garage/loadout", "{invalid json")
+    reopened._settings.sync()
+    recovered = CosmeticGarage(initial_pack="FROSTBITE")
+    assert recovered.loadout_slots() == {slot: "FROSTBITE" for slot in SLOTS}
+    assert not recovered._settings.value("cosmetic_garage/loadout", "")
+    recovered._settings.remove("cosmetic_garage/loadout")
+    recovered._settings.sync()
+    recovered.close()
+
 app.quit()
 print("All 20 cosmetic concepts, loadout mixes, safe exports and validation passed")
