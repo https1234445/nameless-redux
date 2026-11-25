@@ -1098,16 +1098,16 @@ class ReduxWindow(QMainWindow):
                 "Overview": "Home", "World Reborn": "Redux Collection",
                 "Visuals Studio": "Visual Lab", "Redux Collection": "Gallery"
             }.get(name, name) + ({
-                "Overview": "\\n          Main Hub",
-                "World Reborn": "\\n          Worlds & Styles",
-                "Visuals Studio": "\\n          Before / After Editor",
-                "Redux Collection": "\\n          All Previews",
-                "Settings": "\\n          Preferences"
+                "Overview": "\nMain Hub",
+                "World Reborn": "\nWorlds & Styles",
+                "Visuals Studio": "\nBefore / After Editor",
+                "Redux Collection": "\nAll Previews",
+                "Settings": "\nPreferences"
             }.get(name, "")))
             btn.setObjectName("nav")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked=False, n=name: self.navigate(n))
-            btn.setMinimumHeight(52)
+            btn.setMinimumHeight(61)
             side.addWidget(btn)
             if name == "Overview":
                 self.first_nav = btn
@@ -1118,9 +1118,9 @@ class ReduxWindow(QMainWindow):
         # Keep the original Crosshair Studio one click away in the main sidebar.
         self.nav_crosshair_studio.setParent(None)
         self.secondary_nav.remove(self.nav_crosshair_studio)
-        self.nav_crosshair_studio.setText("⌖    Crosshair Studio\\n          Aim & Crosshair")
+        self.nav_crosshair_studio.setText("⌖    Crosshair Studio\nAim & Crosshair")
         self.nav_crosshair_studio.setObjectName("nav")
-        self.nav_crosshair_studio.setMinimumHeight(52)
+        self.nav_crosshair_studio.setMinimumHeight(61)
         self.nav_crosshair_studio.show()
         side.addWidget(self.nav_crosshair_studio)
         self.more_tools_button = QPushButton("MORE TOOLS  +")
@@ -1375,7 +1375,7 @@ class ReduxWindow(QMainWindow):
         self.effects_preview = EffectsPreview()
         self.effects_preview.setToolTip(
             "Drag the comparison divider to inspect your visual adjustments.")
-        self.effects_preview.setMinimumHeight(460)
+        self.effects_preview.setMinimumHeight(380)
         self.effects_preview.setObjectName("visualCanvas")
         effects_layout.addWidget(self.effects_preview)
         self.preview_source = QLabel("ROB RUN • automatic official Steam preview")
@@ -1427,7 +1427,17 @@ class ReduxWindow(QMainWindow):
             btn.clicked.connect(handler)
             effect_actions.addWidget(btn)
         effects_layout.addLayout(effect_actions)
-        l.addWidget(effects_card)
+        # Keep the comparison image visible beside the grading controls.
+        # A two-column layout avoids scrolling the image offscreen when editing
+        # brightness, contrast, saturation or temperature.
+        effects_layout.removeWidget(self.effects_preview)
+        visual_workspace = QHBoxLayout()
+        visual_workspace.setSpacing(14)
+        preview_column = QVBoxLayout()
+        preview_column.addWidget(self.effects_preview, 1)
+        visual_workspace.addLayout(preview_column, 6)
+        visual_workspace.addWidget(effects_card, 4)
+        l.addLayout(visual_workspace)
          # Visual comparison is the primary feature; controls follow below.
         c, cl = self.card("COLOR PRESET", "Choose a base palette.")
         self.palette_combo = ClickOnlyComboBox()
@@ -2695,8 +2705,6 @@ class ReduxWindow(QMainWindow):
     def update_effects_preview(self):
         values = {key: slider.value() for key, slider in self.effect_sliders.items()}
         self.effects_preview.apply_effects(**values)
-        self.effects_preview.compare_enabled = True
-        self.compare_check.setChecked(True)
         self.effect_feedback.setText("AFTER  /  " + "  •  ".join(f"{k.upper()} {v}" for k, v in values.items()))
         # Keep dragging responsive: the preview's single-shot timer coalesces
         # rapid slider changes. Explicit exports and tests still flush on demand.
@@ -3168,23 +3176,31 @@ class ReduxWindow(QMainWindow):
                 padding:10px 12px;border:0;border-radius:11px;font-size:14px;font-weight:700;
             }
             QPushButton#nav:hover {background:#3B1C36;color:#FFFFFF;}
-            QPushButton#nav:checked {background:#61234D;color:#FFFFFF;
-                border:1px solid #EF68B9;font-weight:900;}
+            QPushButton#nav:checked {background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(239,68,166,160),stop:0.5 rgba(113,37,94,125),
+                stop:1 rgba(31,13,40,95));color:#FFFFFF;
+                border:1px solid #FF79C6;font-weight:900;}
             QPushButton#quickTab {
                 background:transparent;color:#F0E7F1;border:0;
                 border-bottom:2px solid transparent;border-radius:0;
                 padding:9px 11px;font-size:12px;font-weight:800;
             }
             QPushButton#quickTab:hover {background:#3B1A36;border-color:#ED7DBD;}
-            QPushButton#quickTab:checked {background:#3A1732;color:#FFFFFF;
+            QPushButton#quickTab:checked {background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(210,44,139,125),stop:0.5 rgba(91,25,79,95),
+                stop:1 rgba(12,10,22,20));color:#FFFFFF;
                 border-bottom:3px solid #FF6CC5;}
             QLabel#gameStatusTop {color:#36E48D;font-size:12px;font-weight:900;
                 padding:7px 5px;}
+            QPushButton:focus {outline:none;}
+            QAbstractButton:focus {outline:none;}
             QPushButton#moreTools {background:transparent;color:#D89BC3;
                 border:1px solid #5B3653;padding:6px;font-size:10px;}
-            QPushButton#primaryAction {background:#AF3B81;color:#FFFFFF;
+            QPushButton#primaryAction {background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                stop:0 rgba(255,80,174,180),stop:0.5 rgba(143,40,112,145),
+                stop:1 rgba(49,17,57,95));color:#FFFFFF;
                 border:1px solid #FF9FDD;font-weight:900;}
-            QPushButton#primaryAction:hover {background:#D14D9B;border-color:#FFFFFF;}
+            QPushButton#primaryAction:hover {background:rgba(229,65,156,175);border-color:#FFDBF2;}
             QPushButton#primaryAction[gameRunning="true"] {background:#267B60;border-color:#91F2CD;}
             QPushButton {background:#2B1930;color:#FFE8F8;border:1px solid #774269;
                 border-radius:9px;padding:10px 13px;font-size:12px;font-weight:800;}
