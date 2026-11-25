@@ -41,15 +41,9 @@ class ArtLabel(QLabel):
         if not self.image.isNull() and self.width()>0 and self.height()>0:
             pix = QPixmap.fromImage(self.image).scaled(
                 self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
-            from PySide6.QtGui import QPainter
-            from PySide6.QtCore import QRect
-            crop = QPixmap(self.size())
-            crop.fill(QColor("#11101D"))
-            painter = QPainter(crop)
-            painter.drawPixmap(0,0,pix,pix.rect().adjusted(
-                (pix.width()-self.width())//2,(pix.height()-self.height())//2,
-                -(pix.width()-self.width()+1)//2,-(pix.height()-self.height()+1)//2))
-            painter.end()
+            left = max(0, (pix.width()-self.width())//2)
+            top = max(0, (pix.height()-self.height())//2)
+            crop = pix.copy(left, top, self.width(), self.height())
             self.setPixmap(crop)
         else:
             self.setText("PREVIEW UNAVAILABLE")
@@ -174,7 +168,7 @@ class WorldReborn(QWidget):
         import math
         values={key:slider.value() for key,(slider,label) in self.controls.items()}
         for key,(slider,label) in self.controls.items():label.setText(f"{slider.value():+d}")
-        img=self.source.scaled(850,480,Qt.KeepAspectRatio,Qt.SmoothTransformation).convertToFormat(QImage.Format_RGB32)
+        img=self.source.scaled(480,270,Qt.KeepAspectRatio,Qt.SmoothTransformation).convertToFormat(QImage.Format_RGB32)
         bright=values["Brightness"]*1.25
         contrast=1+values["Contrast"]/150
         saturation=max(0,1+values["Saturation"]/100)
