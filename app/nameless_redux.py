@@ -1083,25 +1083,25 @@ class ReduxWindow(QMainWindow):
         self.stack.setObjectName("pageStack")
         self.pages = {}
         nav_items = [
-            ("World Reborn", "✿"),
-            ("Redux Collection", "◇"),
-            ("Overview", "◈"),
-            ("Visuals Studio", "◉"),
+            ("Overview", "⌂"),
+            ("World Reborn", "◇"),
+            ("Visuals Studio", "☷"),
+            ("Redux Collection", "▧"),
+            ("Settings", "⚙"),
             ("Theme Lab", "✦"),
             ("Sound Library", "♫"),
             ("Crosshair Studio", "⌖"),
             ("Profiles", "▤"),
             ("Game Center", "▣"),
-            ("Settings", "⚙"),
         ]
+        self.secondary_nav = []
+        self.primary_nav = {"Overview", "World Reborn", "Visuals Studio",
+                            "Redux Collection", "Settings"}
         for name, glyph in nav_items:
-            if name in ("Sound Library", "Game Center"):
-                side.addSpacing(9)
-                group = QLabel("TOOLS" if name == "Sound Library" else "SYSTEM")
-                group.setObjectName("navSection")
-                side.addWidget(group)
-                side.addSpacing(3)
-            btn = GlowButton(f"{glyph}    {name}")
+            btn = GlowButton(f"{glyph}    " + {
+                "Overview": "Home", "World Reborn": "Redux Collection",
+                "Visuals Studio": "Visual Lab", "Redux Collection": "Gallery"
+            }.get(name, name))
             btn.setObjectName("nav")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked=False, n=name: self.navigate(n))
@@ -1109,6 +1109,14 @@ class ReduxWindow(QMainWindow):
             if name == "Overview":
                 self.first_nav = btn
             setattr(self, "nav_" + name.lower().replace(" ", "_"), btn)
+            if name not in self.primary_nav:
+                self.secondary_nav.append(btn)
+                btn.hide()
+        self.more_tools_button = QPushButton("MORE TOOLS  +")
+        self.more_tools_button.setObjectName("moreTools")
+        self.more_tools_button.setCheckable(True)
+        self.more_tools_button.toggled.connect(self.toggle_extra_tools)
+        side.addWidget(self.more_tools_button)
 
         side.addStretch()
         # Scenic lower sidebar art uses the same replaceable REDUX artwork as the
@@ -1134,7 +1142,10 @@ class ReduxWindow(QMainWindow):
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(12, 12, 12, 12)
         content_layout.setSpacing(11)
-        header = QHBoxLayout()
+        header_widget = QWidget()
+        header = QHBoxLayout(header_widget)
+        header.setContentsMargins(0, 0, 0, 0)
+        self.main_header = header_widget
         self.page_title = QLabel("Overview")
         self.page_title.setObjectName("pageTitle")
         header.addWidget(self.page_title)
@@ -1148,21 +1159,22 @@ class ReduxWindow(QMainWindow):
         launch_button.setObjectName("primaryAction")
         launch_button.clicked.connect(self.launch_steam_game)
         header.addWidget(launch_button)
-        content_layout.addLayout(header)
+        content_layout.addWidget(header_widget)
         separator = QFrame()
         separator.setObjectName("headerRule")
         separator.setFixedHeight(1)
         content_layout.addWidget(separator)
+        self.main_header_rule = separator
         # Quick navigation mirrors the reference while retaining all original pages.
         self.quick_tabs = QHBoxLayout()
         self.quick_tabs.setSpacing(7)
         self.quick_tab_buttons = {}
         for label, destination in (
-            ("OVERVIEW", "Overview"),
-            ("REDUX COLLECTION", "World Reborn"),
-            ("VISUAL LAB", "Visuals Studio"),
-            ("GALLERY", "Redux Collection"),
-            ("SETTINGS", "Settings"),
+            ("⌂  Home", "Overview"),
+            ("◇  Redux Collection", "World Reborn"),
+            ("☷  Visual Lab", "Visuals Studio"),
+            ("▧  Gallery", "Redux Collection"),
+            ("⚙  Settings", "Settings"),
         ):
             tab = QPushButton(label)
             tab.setObjectName("quickTab")
@@ -1171,7 +1183,7 @@ class ReduxWindow(QMainWindow):
             self.quick_tabs.addWidget(tab)
             self.quick_tab_buttons[destination] = tab
         self.quick_tabs.addStretch()
-        content_layout.addLayout(self.quick_tabs)
+        content_layout.insertLayout(0, self.quick_tabs)
         content_layout.addWidget(self.stack, 1)
 
         main.addWidget(sidebar)
@@ -2481,6 +2493,11 @@ class ReduxWindow(QMainWindow):
         layout.addWidget(slider)
         return slider
 
+    def toggle_extra_tools(self, checked):
+        for button in self.secondary_nav:
+            button.setVisible(checked)
+        self.more_tools_button.setText("LESS TOOLS  −" if checked else "MORE TOOLS  +")
+
     def navigate(self, name):
         """Switch pages without an opacity effect on a scroll viewport.
 
@@ -2488,6 +2505,8 @@ class ReduxWindow(QMainWindow):
         renderings until a hover or another repaint event occurs.
         """
         target = self.pages[name]
+        self.main_header.setVisible(name != "World Reborn")
+        self.main_header_rule.setVisible(name != "World Reborn")
         if self.stack.currentWidget() is not target:
             previous = self.stack.currentWidget()
             if previous is not None and previous.graphicsEffect() is not None:
@@ -3088,7 +3107,7 @@ class ReduxWindow(QMainWindow):
             QScrollArea, QScrollArea#oceanScroll, QWidget#oceanViewport,
             QScrollArea > QWidget > QWidget {
                 background-color:#0C0912; color:#F9EAF6;
-                font-family:'Segoe UI'; font-size:12px;
+                font-family:'Arial'; font-size:12px;
             }
             QWidget#contentSurface {background:transparent;}
             QFrame#sidebar {
@@ -3097,8 +3116,8 @@ class ReduxWindow(QMainWindow):
                 border-right:1px solid #703459;
             }
             QLabel {background:transparent;color:#F8EAF6;}
-            QLabel#brand {color:#FF95D7;font-size:19px;font-weight:900;letter-spacing:2px;}
-            QLabel#subbrand {color:#C778B4;font-size:9px;letter-spacing:1px;}
+            QLabel#brand {color:#FFFFFF;font-size:22px;font-weight:900;letter-spacing:1px;}
+            QLabel#subbrand {color:#FF8CCD;font-size:10px;letter-spacing:1px;}
             QLabel#navSection {color:#986D96;font-size:10px;font-weight:800;padding-left:9px;}
             QLabel#version {color:#9B7696;font-size:10px;}
             QLabel#pageTitle {color:#FFFFFF;font-size:24px;font-weight:900;}
@@ -3130,11 +3149,15 @@ class ReduxWindow(QMainWindow):
             QPushButton#nav:checked {background:#562146;color:#FFFFFF;
                 border-left:3px solid #FF8ED3;font-weight:900;}
             QPushButton#quickTab {
-                background:#180F20;color:#D7B8D1;border:1px solid #49253F;
-                border-radius:7px;padding:10px 13px;font-size:11px;font-weight:900;
+                background:transparent;color:#F0E7F1;border:0;
+                border-bottom:2px solid transparent;border-radius:0;
+                padding:13px 18px;font-size:13px;font-weight:800;
             }
             QPushButton#quickTab:hover {background:#3B1A36;border-color:#ED7DBD;}
-            QPushButton#quickTab:checked {background:#67234E;color:#FFFFFF;border-color:#FF8DD2;}
+            QPushButton#quickTab:checked {background:#3A1732;color:#FFFFFF;
+                border-bottom:3px solid #FF6CC5;}
+            QPushButton#moreTools {background:transparent;color:#D89BC3;
+                border:1px solid #5B3653;padding:6px;font-size:10px;}
             QPushButton#primaryAction {background:#AF3B81;color:#FFFFFF;
                 border:1px solid #FF9FDD;font-weight:900;}
             QPushButton#primaryAction:hover {background:#D14D9B;border-color:#FFFFFF;}
