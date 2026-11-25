@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from collections import Counter
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve, Property, QTimer, QPoint, QEvent
+from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve, Property, QTimer, QPoint, QEvent, QStandardPaths
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient, QRadialGradient, QImage, QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from redux_showroom import ReduxShowroom
