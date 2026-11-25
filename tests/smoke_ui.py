@@ -79,7 +79,10 @@ from PySide6.QtWidgets import QPushButton
 install_buttons = [b for b in window.findChildren(QPushButton)
                    if b.text().startswith("INSTALL INTO ROB RUN")]
 assert len(install_buttons) == 4
-assert not install_buttons[0].isEnabled()
+assert all(not button.isEnabled() for button in install_buttons)
+garage_buttons = [button for button in window.findChildren(QPushButton)
+                  if button.text().startswith("VIEW WEAPONS / CARS")]
+assert len(garage_buttons) == 4, "Every Redux has its own Cosmetic Garage entry"
 # A collection selection changes local preview only, without a game patch.
 from PySide6.QtWidgets import QMessageBox
 original_info = QMessageBox.information
