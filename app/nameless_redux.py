@@ -765,7 +765,10 @@ class ExactHomeOverlay(QWidget):
         y = (event.position().y() - rect.y()) * 941 / rect.height()
         # Top navigation and sidebar, as pictured in the supplied reference.
         if y < 64:
-            if 315 <= x < 455: self.go("Overview")
+            if x >= 1600: self.window().close()
+            elif 1555 <= x < 1600: self.window().showNormal() if self.window().isMaximized() else self.window().showMaximized()
+            elif 1515 <= x < 1555: self.window().showMinimized()
+            elif 315 <= x < 455: self.go("Overview")
             elif 455 <= x < 650: self.go("World Reborn")
             elif 650 <= x < 800: self.go("Visuals Studio")
             elif 800 <= x < 940: self.go("Redux Collection")
