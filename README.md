@@ -1,3 +1,7 @@
+## ROB RUN Lag Report (3.16 DEV)
+
+Open **Game Center → PING LAB → CREATE ROB RUN LAG REPORT** to record a player-reported incident: region, time, symptom, in-game ping (optional), and a required description. Export a human-readable TXT or structured JSON report locally, with an optional clearly labeled public TCP reference check from the current PING LAB session. Reports are **not sent automatically**. Neither PING LAB nor these reports establish DDoS attacks, server outages or actual game UDP packet loss. The game and Windows network settings remain unchanged.
+
 ## PING LAB history (3.15 DEV)
 
 PING LAB now keeps up to 60 **local-only** reference TCP connection checks, shows timestamps, median connection times, connection failures and connect-time variation, and compares the latest two checks against the **same reference endpoint**. History can be exported as JSON or deleted with confirmation. It does not collect ROB RUN network packets, measure actual UDP packet loss, diagnose DDoS, or modify network settings. Run the new offline history smoke test with `python tests/ping_history_smoke.py`.
