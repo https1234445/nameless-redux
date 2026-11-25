@@ -1062,22 +1062,18 @@ class ReduxWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(286)
+        sidebar.setFixedWidth(251)
         side = QVBoxLayout(sidebar)
-        side.setContentsMargins(15, 17, 15, 13)
+        side.setContentsMargins(16, 13, 12, 12)
         side.setSpacing(6)
 
-        brand = ShimmerText("NAMELESS REDUX")
+        brand = QLabel("NAMELESS")
         brand.setObjectName("brand")
         side.addWidget(brand)
-        sub = QLabel("WORLD REBORN  •  SAKURA EDITION")
+        sub = QLabel("REDUX")
         sub.setObjectName("subbrand")
         side.addWidget(sub)
-        side.addSpacing(12)
-        nav_label = QLabel("WORKSPACE")
-        nav_label.setObjectName("navSection")
-        side.addWidget(nav_label)
-        side.addSpacing(4)
+        side.addSpacing(20)
 
         self.stack = QStackedWidget()
         self.stack.setObjectName("pageStack")
@@ -1105,6 +1101,7 @@ class ReduxWindow(QMainWindow):
             btn.setObjectName("nav")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked=False, n=name: self.navigate(n))
+            btn.setMinimumHeight(52)
             side.addWidget(btn)
             if name == "Overview":
                 self.first_nav = btn
@@ -1128,12 +1125,12 @@ class ReduxWindow(QMainWindow):
             self.sidebar_scenic = scenic
             scenic.setObjectName("sidebarScenic")
             scenic.setPixmap(QPixmap.fromImage(sidebar_art).scaled(
-                256, 175, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-            scenic.setFixedHeight(175)
+                223, 295, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+            scenic.setFixedHeight(295)
             scenic.setAlignment(Qt.AlignCenter)
             scenic.setScaledContents(False)
             side.addWidget(scenic)
-        version = QLabel(f"NAMELESS REDUX / {VERSION}\nROB RUN EDITION")
+        version = QLabel("NAMELESS REDUX\nWORLD REBORN V2.0")
         version.setObjectName("version")
         side.addWidget(version)
 
@@ -1183,6 +1180,15 @@ class ReduxWindow(QMainWindow):
             self.quick_tabs.addWidget(tab)
             self.quick_tab_buttons[destination] = tab
         self.quick_tabs.addStretch()
+        # Always-visible game launch and a live status dot share the top bar.
+        self.top_game_status.setParent(None)
+        self.top_launch_button.setParent(None)
+        self.top_game_status.setText("●  ROB RUN")
+        self.top_game_status.setObjectName("gameStatusTop")
+        self.top_game_status.setToolTip("Game status updates automatically")
+        self.quick_tabs.addWidget(self.top_game_status)
+        self.top_launch_button.setText("▶  LAUNCH ROB RUN")
+        self.quick_tabs.addWidget(self.top_launch_button)
         content_layout.insertLayout(0, self.quick_tabs)
         content_layout.addWidget(self.stack, 1)
 
@@ -2319,7 +2325,7 @@ class ReduxWindow(QMainWindow):
             image = world_art("sakura_dream.jpg")
             if not image.isNull():
                 self.sidebar_scenic.setPixmap(QPixmap.fromImage(image).scaled(
-                    256, 175, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+                    223, 295, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
         # A new real preview is only loaded if the player has not already
         # selected their own screenshot, which must take precedence.
         if not str(self.settings.value("preview/screenshot", "") or ""):
@@ -2505,8 +2511,8 @@ class ReduxWindow(QMainWindow):
         renderings until a hover or another repaint event occurs.
         """
         target = self.pages[name]
-        self.main_header.setVisible(name != "World Reborn")
-        self.main_header_rule.setVisible(name != "World Reborn")
+        self.main_header.setVisible(False)
+        self.main_header_rule.setVisible(False)
         if self.stack.currentWidget() is not target:
             previous = self.stack.currentWidget()
             if previous is not None and previous.graphicsEffect() is not None:
@@ -3116,10 +3122,10 @@ class ReduxWindow(QMainWindow):
                 border-right:1px solid #703459;
             }
             QLabel {background:transparent;color:#F8EAF6;}
-            QLabel#brand {color:#FFFFFF;font-size:22px;font-weight:900;letter-spacing:1px;}
-            QLabel#subbrand {color:#FF8CCD;font-size:10px;letter-spacing:1px;}
+            QLabel#brand {color:#FFFFFF;font-family:Georgia;font-size:29px;font-weight:400;letter-spacing:1px;}
+            QLabel#subbrand {color:#FF86D2;font-family:Georgia;font-style:italic;font-size:30px;font-weight:900;padding-left:65px;}
             QLabel#navSection {color:#986D96;font-size:10px;font-weight:800;padding-left:9px;}
-            QLabel#version {color:#9B7696;font-size:10px;}
+            QLabel#version {color:#E3C5D9;font-size:10px;letter-spacing:1px;}
             QLabel#pageTitle {color:#FFFFFF;font-size:24px;font-weight:900;}
             QLabel#status {color:#E4A9D4;font-size:11px;font-weight:800;}
             QLabel#sectionTitle {color:#FFE8F8;font-size:21px;font-weight:900;}
@@ -3143,19 +3149,21 @@ class ReduxWindow(QMainWindow):
             QWidget#visualCanvas {background:#130D1B;border:1px solid #703D66;border-radius:12px;}
             QPushButton#nav {
                 background:transparent;color:#CEB4D0;text-align:left;
-                padding:11px 13px;border:0;border-radius:9px;font-size:12px;font-weight:800;
+                padding:10px 12px;border:0;border-radius:11px;font-size:14px;font-weight:700;
             }
             QPushButton#nav:hover {background:#3B1C36;color:#FFFFFF;}
-            QPushButton#nav:checked {background:#562146;color:#FFFFFF;
-                border-left:3px solid #FF8ED3;font-weight:900;}
+            QPushButton#nav:checked {background:#61234D;color:#FFFFFF;
+                border:1px solid #EF68B9;font-weight:900;}
             QPushButton#quickTab {
                 background:transparent;color:#F0E7F1;border:0;
                 border-bottom:2px solid transparent;border-radius:0;
-                padding:13px 18px;font-size:13px;font-weight:800;
+                padding:9px 11px;font-size:12px;font-weight:800;
             }
             QPushButton#quickTab:hover {background:#3B1A36;border-color:#ED7DBD;}
             QPushButton#quickTab:checked {background:#3A1732;color:#FFFFFF;
                 border-bottom:3px solid #FF6CC5;}
+            QLabel#gameStatusTop {color:#36E48D;font-size:12px;font-weight:900;
+                padding:7px 5px;}
             QPushButton#moreTools {background:transparent;color:#D89BC3;
                 border:1px solid #5B3653;padding:6px;font-size:10px;}
             QPushButton#primaryAction {background:#AF3B81;color:#FFFFFF;
