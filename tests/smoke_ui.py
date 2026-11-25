@@ -40,6 +40,8 @@ for destination, tab in window.quick_tab_buttons.items():
     tab.click()
     assert window.stack.currentWidget() is window.pages[destination], destination
     assert tab.isChecked(), destination
+    nav = getattr(window, "nav_" + destination.lower().replace(" ", "_"))
+    assert nav.isChecked(), "Sidebar must highlight the same selected page"
 window.navigate("World Reborn")
 # Slider changes must be deferred, never synchronously force pixel processing.
 window.navigate("Visuals Studio")
