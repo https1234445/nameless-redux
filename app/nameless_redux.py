@@ -1303,6 +1303,9 @@ class ReduxWindow(QMainWindow):
         self.effects_preview.setObjectName("visualCanvas")
         effects_layout.addWidget(self.effects_preview)
         self.preview_source = QLabel("ROB RUN • automatic official Steam preview")
+        screenshot_button = QPushButton("USE MY ROB RUN SCREENSHOT  /  BEFORE")
+        screenshot_button.clicked.connect(self.choose_preview_screenshot)
+        effects_layout.addWidget(screenshot_button)
         self.preview_source.setObjectName("previewSource")
         self.preview_source.setWordWrap(True)
         effects_layout.addWidget(self.preview_source)
@@ -1785,7 +1788,7 @@ class ReduxWindow(QMainWindow):
             picture_reply.finished.connect(lambda r=picture_reply, n=request_id: self._steam_image_ready(r, n))
         except (ValueError, KeyError, IndexError, TypeError, UnicodeError) as exc:
             self.preview_source.setText(
-                "Official ROB RUN preview temporarily unavailable • " + str(exc))
+                "Steam image unavailable — import the REDUX art ZIP or choose a screenshot. " + str(exc))
         finally:
             reply.deleteLater()
 
