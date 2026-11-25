@@ -4,6 +4,7 @@ All artwork is made from Qt vector primitives. The garage never reads or
 modifies game assets and never communicates with the ROB RUN process.
 """
 from __future__ import annotations
+from ui_controls import ClickOnlyComboBox
 
 import json
 import math
@@ -399,7 +400,7 @@ class CosmeticGarage(QDialog):
         select_title = QLabel("PREVIEW CATEGORY")
         select_title.setObjectName("garageLabel")
         controls.addWidget(select_title)
-        self.category_select = QComboBox()
+        self.category_select = ClickOnlyComboBox()
         self.category_select.addItems([SLOT_TITLES[s] for s in SLOTS])
         self.category_select.setCurrentIndex(1)
         controls.addWidget(self.category_select)
@@ -412,7 +413,7 @@ class CosmeticGarage(QDialog):
             label = QLabel(SLOT_TITLES[slot])
             label.setObjectName("garageSlot")
             controls.addWidget(label)
-            choice = QComboBox()
+            choice = ClickOnlyComboBox()
             choice.addItems(PACK_NAMES)
             choice.setCurrentText(initial_pack)
             choice.currentTextChanged.connect(
