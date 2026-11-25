@@ -2095,13 +2095,16 @@ class ReduxWindow(QMainWindow):
 
         def open_selected(pack, slot):
             # Open the garage after the atlas closes, avoiding nested modal loops.
-            QTimer.singleShot(0, lambda: self.open_cosmetic_garage(pack))
+            QTimer.singleShot(0, lambda: self.open_cosmetic_garage(pack, slot))
 
         CosmeticAtlas(self, on_select=open_selected).exec()
 
-    def open_cosmetic_garage(self, name="SAKURA DREAM"):
+    def open_cosmetic_garage(self, name="SAKURA DREAM", slot=None):
         """Open original cosmetic loadout studio; no ROB RUN asset modification."""
         dialog = CosmeticGarage(self, initial_pack=name)
+        if slot in ("weapon", "vehicle", "outfit", "mask", "backpack"):
+            dialog.category_select.setCurrentIndex(("weapon", "vehicle", "outfit", "mask", "backpack").index(slot))
+            dialog.slot_selects[slot].setCurrentText(name)
         dialog.exec()
 
     def preview_collection_pack(self, palette, name):
