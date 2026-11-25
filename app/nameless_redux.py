@@ -728,6 +728,56 @@ class CrosshairPreview(QWidget):
 
 
 
+class ScenicSidebar(QFrame):
+    """Full-height motel atmosphere, with text floating over the artwork."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.artwork = QImage()
+        self.setAttribute(Qt.WA_StyledBackground, False)
+
+    def set_artwork(self, image):
+        self.artwork = image
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        w, h = self.width(), self.height()
+        p.fillRect(self.rect(), QColor("#100B18"))
+        if not self.artwork.isNull():
+            # Preserve the original car image; paint it as an atmospheric
+            # background rather than a separate rectangular image widget.
+            photo_top = max(0, int(h * .36))
+            photo_height = h - photo_top
+            source = self.artwork
+            target_ratio = w / max(1, photo_height)
+            source_ratio = source.width() / max(1, source.height())
+            if source_ratio > target_ratio:
+                crop_w = int(source.height() * target_ratio)
+                sx = (source.width() - crop_w) // 2
+                crop = source.copy(sx, 0, crop_w, source.height())
+            else:
+                crop_h = int(source.width() / target_ratio)
+                crop = source.copy(0, 0, source.width(), crop_h)
+            p.drawImage(0, photo_top, crop.scaled(
+                w, photo_height, Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+        shade = QLinearGradient(0, 0, 0, h)
+        shade.setColorAt(0.0, QColor(15, 8, 24, 210))
+        shade.setColorAt(.27, QColor(15, 8, 24, 240))
+        shade.setColorAt(.43, QColor(27, 11, 34, 170))
+        shade.setColorAt(.67, QColor(30, 9, 34, 60))
+        shade.setColorAt(1.0, QColor(9, 5, 16, 130))
+        p.fillRect(self.rect(), shade)
+        glow = QLinearGradient(0, 0, w, h)
+        glow.setColorAt(0.0, QColor(240, 52, 158, 40))
+        glow.setColorAt(.55, QColor(72, 22, 105, 0))
+        glow.setColorAt(1.0, QColor(230, 66, 164, 28))
+        p.fillRect(self.rect(), glow)
+        p.setPen(QPen(QColor("#A7488C"), 1))
+        p.drawLine(w-1, 0, w-1, h)
+        p.end()
+
+
 class AmbientSurface(QWidget):
     """Subtle animated ambient gradients. Paint only a few shapes at 20 fps."""
     def __init__(self, parent=None):
@@ -1060,8 +1110,9 @@ class ReduxWindow(QMainWindow):
         main.setContentsMargins(0, 0, 0, 0)
         main.setSpacing(0)
 
-        sidebar = QFrame()
+        sidebar = ScenicSidebar()
         sidebar.setObjectName("sidebar")
+        self.scenic_sidebar = sidebar
         sidebar.setFixedWidth(251)
         side = QVBoxLayout(sidebar)
         side.setContentsMargins(16, 13, 12, 12)
@@ -1130,20 +1181,10 @@ class ReduxWindow(QMainWindow):
         side.addWidget(self.more_tools_button)
 
         side.addStretch()
-        # Scenic lower sidebar art uses the same replaceable REDUX artwork as the
-        # collection; importing a custom art pack updates it on next launch.
+        # The scenic image now fills the lower sidebar behind the controls.
+        # No opaque photo tile: labels and navigation float over the sky.
         from world_reborn import art as world_art
-        sidebar_art = world_art("sakura_dream.jpg")
-        if not sidebar_art.isNull():
-            scenic = QLabel()
-            self.sidebar_scenic = scenic
-            scenic.setObjectName("sidebarScenic")
-            scenic.setPixmap(QPixmap.fromImage(sidebar_art).scaled(
-                223, 295, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-            scenic.setFixedHeight(295)
-            scenic.setAlignment(Qt.AlignCenter)
-            scenic.setScaledContents(False)
-            side.addWidget(scenic)
+        sidebar.set_artwork(world_art("sakura_dream.jpg"))
         version = QLabel("NAMELESS REDUX\nWORLD REBORN V2.0")
         version.setObjectName("version")
         side.addWidget(version)
@@ -2348,12 +2389,9 @@ class ReduxWindow(QMainWindow):
         self.gallery_canvas.update()
         # Refresh cached Qt images immediately; no restart needed.
         self.pages["World Reborn"].reload_art()
-        if hasattr(self, "sidebar_scenic"):
+        if hasattr(self, "scenic_sidebar"):
             from world_reborn import art as world_art
-            image = world_art("sakura_dream.jpg")
-            if not image.isNull():
-                self.sidebar_scenic.setPixmap(QPixmap.fromImage(image).scaled(
-                    223, 295, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+            self.scenic_sidebar.set_artwork(world_art("sakura_dream.jpg"))
         # A new real preview is only loaded if the player has not already
         # selected their own screenshot, which must take precedence.
         if not str(self.settings.value("preview/screenshot", "") or ""):
@@ -3155,11 +3193,7 @@ class ReduxWindow(QMainWindow):
                 font-family:'Arial'; font-size:12px;
             }
             QWidget#contentSurface {background:transparent;}
-            QFrame#sidebar {
-                background:qlineargradient(x1:0,y1:0,x2:0,y2:1,
-                    stop:0 #170D20,stop:.65 #110D1B,stop:1 #0A0911);
-                border-right:1px solid #703459;
-            }
+            QFrame#sidebar {background:transparent;border:0;}
             QLabel {background:transparent;color:#F8EAF6;}
             QLabel#brand {color:#FFFFFF;font-family:Georgia;font-size:29px;font-weight:400;letter-spacing:1px;}
             QLabel#subbrand {color:#FF86D2;font-family:Georgia;font-style:italic;font-size:30px;font-weight:900;padding-left:65px;}
@@ -3205,10 +3239,10 @@ class ReduxWindow(QMainWindow):
                 stop:0 rgba(210,44,139,125),stop:0.5 rgba(91,25,79,95),
                 stop:1 rgba(12,10,22,20));color:#FFFFFF;
                 border-bottom:3px solid #FF6CC5;}
-            QLabel#gameStatusTop {color:#36E48D;font-size:12px;font-weight:900;
+            QLabel#gameStatusTop {color:#26FF93;font-size:12px;font-weight:900;
                 padding:7px 5px;}
-            QPushButton:focus {outline:none;}
-            QAbstractButton:focus {outline:none;}
+            QPushButton:focus {outline:0px;border-color:#FF8CD5;}
+            QAbstractButton:focus {outline:0px;}
             QPushButton#moreTools {background:transparent;color:#D89BC3;
                 border:1px solid #5B3653;padding:6px;font-size:10px;}
             QPushButton#primaryAction {background:qlineargradient(x1:0,y1:0,x2:1,y2:1,
