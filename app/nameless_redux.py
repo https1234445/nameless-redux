@@ -1321,10 +1321,10 @@ class ReduxWindow(QMainWindow):
             self.effect_sliders[key] = self.add_slider(effects_layout, label, low, high, initial)
         self.effects_timer = QTimer(self)
         self.effects_timer.setSingleShot(True)
-        self.effects_timer.setInterval(140)
+        self.effects_timer.setInterval(25)
         self.effects_timer.timeout.connect(self.update_effects_preview)
         for slider in self.effect_sliders.values():
-            slider.valueChanged.connect(lambda _v: self.effects_timer.start())
+            slider.valueChanged.connect(self.update_effects_preview)
         effect_actions = QHBoxLayout()
         for title, handler in [
             ("SAVE EFFECTS", self.save_effects),
@@ -2127,7 +2127,7 @@ class ReduxWindow(QMainWindow):
 
     def open_cosmetic_garage(self, name="SAKURA DREAM", slot=None):
         """Open original cosmetic loadout studio; no ROB RUN asset modification."""
-        dialog = CosmeticGarage(self, initial_pack=name)
+        dialog = CosmeticGarage(self, initial_pack=name, focused=True)
         if slot in ("weapon", "vehicle", "outfit", "mask", "backpack"):
             dialog.category_select.setCurrentIndex(("weapon", "vehicle", "outfit", "mask", "backpack").index(slot))
             dialog.slot_selects[slot].setCurrentText(name)
@@ -2390,6 +2390,8 @@ class ReduxWindow(QMainWindow):
     def update_effects_preview(self):
         values = {key: slider.value() for key, slider in self.effect_sliders.items()}
         self.effects_preview.apply_effects(**values)
+        # Every adjustment updates the AFTER half while BEFORE stays original.
+        self.effects_preview.flush_effects()
 
     def save_effects(self):
         for key, slider in self.effect_sliders.items():
