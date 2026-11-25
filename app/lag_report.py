@@ -1,3 +1,4 @@
+from ui_controls import ClickOnlyComboBox
 """ROB RUN Lag Report: local, opt-in incident reports for developers.
 
 No automatic uploads, game traffic capture, network changes or DDoS claims.
@@ -132,7 +133,7 @@ class LagReportDialog(QDialog):
         self.occurred.setMaxLength(80)
         self.occurred.setPlaceholderText("Optional: date, time and timezone")
         form.addRow("When it happened", self.occurred)
-        self.symptom = QComboBox()
+        self.symptom = ClickOnlyComboBox()
         self.symptom.addItems(SYMPTOMS)
         form.addRow("Main symptom", self.symptom)
         self.game_ping = QLineEdit()
