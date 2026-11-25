@@ -13,6 +13,7 @@ from PySide6.QtCore import Qt, QSettings, QUrl, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient, QRadialGradient, QImage, QPixmap
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from redux_showroom import ReduxShowroom
+from redux_armory import CosmeticGarage
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -191,7 +192,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.8.0-dev"
+VERSION = "3.9.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1179,6 +1180,10 @@ class ReduxWindow(QMainWindow):
         showroom.clicked.connect(
             lambda checked=False: self.open_redux_showroom())
         hero_actions.addWidget(showroom)
+        garage = QPushButton("COSMETIC GARAGE")
+        garage.clicked.connect(
+            lambda checked=False: self.open_cosmetic_garage())
+        hero_actions.addWidget(garage)
         hero_actions.addStretch()
         hl.addLayout(hero_actions)
         l.addWidget(hero)
@@ -1985,6 +1990,10 @@ class ReduxWindow(QMainWindow):
         showroom_button.clicked.connect(
             lambda checked=False: self.open_redux_showroom())
         showroom_intro.addWidget(showroom_button)
+        garage_button = QPushButton("OPEN COSMETIC GARAGE  /  20 DESIGNS")
+        garage_button.clicked.connect(
+            lambda checked=False: self.open_cosmetic_garage())
+        showroom_intro.addWidget(garage_button)
         showroom_intro.addStretch()
         layout.addLayout(showroom_intro)
         grid = QGridLayout()
@@ -2022,6 +2031,10 @@ class ReduxWindow(QMainWindow):
             demo.clicked.connect(
                 lambda checked=False, n=name: self.open_redux_showroom(n))
             inner.addWidget(demo)
+            cosmetics = QPushButton("VIEW WEAPONS / CARS / OUTFITS / MASKS / BAGS")
+            cosmetics.clicked.connect(
+                lambda checked=False, n=name: self.open_cosmetic_garage(n))
+            inner.addWidget(cosmetics)
             activate = GlowButton("SELECT REDUX  ↗")
             activate.setObjectName("primaryAction")
             activate.clicked.connect(
@@ -2058,6 +2071,11 @@ class ReduxWindow(QMainWindow):
         dialog = ReduxShowroom(
             self, initial_pack=name,
             reduce_motion=not self.motion_check.isChecked())
+        dialog.exec()
+
+    def open_cosmetic_garage(self, name="SAKURA DREAM"):
+        """Open original cosmetic loadout studio; no ROB RUN asset modification."""
+        dialog = CosmeticGarage(self, initial_pack=name)
         dialog.exec()
 
     def preview_collection_pack(self, palette, name):
