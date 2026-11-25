@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pyinstaller PySide6 numpy
       - name: Validate source syntax
-        run: python -m py_compile app/nameless_redux.py app/redux_showroom.py app/redux_armory.py app/premium_hero.py launcher.py
+        run: python -m py_compile app/nameless_redux.py app/redux_showroom.py app/redux_armory.py app/premium_hero.py app/redux_atlas.py launcher.py
       - name: Validate all Redux pack manifests
         run: python tests/validate_packs.py
       - name: Headless UI smoke test
@@ -40,6 +40,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: python tests/garage_smoke.py
+          python tests/atlas_smoke.py
       - name: Build app
         shell: pwsh
         run: |
