@@ -19,6 +19,19 @@ for name in ("Redux Collection", "Overview", "Visuals Studio", "Theme Lab", "Sou
     assert window.stack.currentWidget() is window.pages[name], name
 window.navigate("Overview")
 assert window.page_title.text() == "Dashboard"
+# Four collection cards retain distinct worlds and working preview actions.
+from PySide6.QtWidgets import QLabel, QPushButton
+collection = window.pages["Redux Collection"]
+headlines = [w.text() for w in collection.findChildren(QLabel)
+             if w.objectName() == "collectionHeadline"]
+assert set(headlines) == {"PETAL BLOOM", "ELECTRIC CITY", "ZERO DEGREE", "BURNING HORIZON"}
+assert len([b for b in collection.findChildren(QPushButton)
+            if b.text() == "EXPLORE WORLD   ↗"]) == 4
+assert len([b for b in collection.findChildren(QPushButton)
+            if b.text() == "VIEW COSMETICS"]) == 4
+assert len([b for b in collection.findChildren(QPushButton)
+            if b.text() == "APPLY LOOK TO NAMELESS"]) == 4
+
 # Premium hero is static, legible and paintable without an animation timer.
 from premium_hero import PremiumHero
 assert isinstance(window.hero, PremiumHero)
