@@ -2617,7 +2617,16 @@ class ReduxWindow(QMainWindow):
                 button.setGraphicsEffect(None)
         for key in ["world_reborn", "redux_collection", "overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
             btn = getattr(self, "nav_" + key)
-            btn.setChecked(btn.text().endswith(name))
+            active = key == name.lower().replace(" ", "_")
+            btn.setChecked(active)
+            if active:
+                glow = QGraphicsDropShadowEffect(btn)
+                glow.setBlurRadius(19)
+                glow.setOffset(0, 0)
+                glow.setColor(QColor(255, 68, 178, 155))
+                btn.setGraphicsEffect(glow)
+            else:
+                btn.setGraphicsEffect(None)
         if name == "Overview":
             self.update_stats()
 
