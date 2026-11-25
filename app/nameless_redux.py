@@ -2261,11 +2261,14 @@ class ReduxWindow(QMainWindow):
         interval = {1: 120, 2: 65, 3: 45, 4: 32, 5: 24}[speed]
         ambient = self.centralWidget().findChild(AmbientSurface)
         for widget in (ambient, self.hero, self.theme_preview):
-            widget._clock.setInterval(interval)
+            clock = getattr(widget, "_clock", None)
+            if clock is None:
+                continue  # Static premium artwork does not need a repaint timer.
+            clock.setInterval(interval)
             if enabled:
-                widget._clock.start()
+                clock.start()
             else:
-                widget._clock.stop()
+                clock.stop()
         # Performance option applies to every animated UI element, not just
         # the hero. Inactive pages must not keep repainting in the background.
         for widget_type in (ShimmerText, AuroraCard, ReduxCover):
