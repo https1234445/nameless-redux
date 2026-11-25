@@ -32,6 +32,19 @@ assert len([b for b in collection.findChildren(QPushButton)
 assert len([b for b in collection.findChildren(QPushButton)
             if b.text() == "APPLY LOOK TO NAMELESS"]) == 4
 
+# Cinematic right-side gallery switches all four REDUX packs and five categories.
+from redux_armory import COSMETIC_TITLES, SLOTS
+for pack in COSMETIC_TITLES:
+    window.select_gallery_pack(pack)
+    assert window.gallery_pack == pack
+    for slot in SLOTS:
+        window.select_gallery_slot(slot)
+        assert window.gallery_canvas.pack == pack
+        assert window.gallery_canvas.slot == slot
+        assert window.gallery_title.text() == COSMETIC_TITLES[pack][slot]
+window.select_gallery_pack("SAKURA DREAM")
+window.select_gallery_slot("vehicle")
+
 # Premium hero is static, legible and paintable without an animation timer.
 from premium_hero import PremiumHero
 assert isinstance(window.hero, PremiumHero)
