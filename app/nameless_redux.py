@@ -196,7 +196,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.14.0-dev"
+VERSION = "3.15.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
