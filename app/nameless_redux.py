@@ -1115,6 +1115,14 @@ class ReduxWindow(QMainWindow):
             if name not in self.primary_nav:
                 self.secondary_nav.append(btn)
                 btn.hide()
+        # Keep the original Crosshair Studio one click away in the main sidebar.
+        self.nav_crosshair_studio.setParent(None)
+        self.secondary_nav.remove(self.nav_crosshair_studio)
+        self.nav_crosshair_studio.setText("⌖    Crosshair Studio\\n          Aim & Crosshair")
+        self.nav_crosshair_studio.setObjectName("nav")
+        self.nav_crosshair_studio.setMinimumHeight(52)
+        self.nav_crosshair_studio.show()
+        side.addWidget(self.nav_crosshair_studio)
         self.more_tools_button = QPushButton("MORE TOOLS  +")
         self.more_tools_button.setObjectName("moreTools")
         self.more_tools_button.setCheckable(True)
