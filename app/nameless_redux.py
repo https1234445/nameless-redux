@@ -2489,7 +2489,9 @@ class ReduxWindow(QMainWindow):
             "Game Center": "Steam Connect",
         }.get(name, name))
         self.statusBar().showMessage("WORKSPACE  /  " + name.upper(), 1600)
-        for key in ["redux_collection", "overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
+        for destination, button in self.quick_tab_buttons.items():
+            button.setChecked(destination == name)
+        for key in ["world_reborn", "redux_collection", "overview", "visuals_studio", "theme_lab", "sound_library", "crosshair_studio", "profiles", "game_center", "settings"]:
             btn = getattr(self, "nav_" + key)
             btn.setChecked(btn.text().endswith(name))
         if name == "Overview":
