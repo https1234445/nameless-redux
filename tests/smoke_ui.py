@@ -39,6 +39,13 @@ window.navigate("World Reborn")
 for index, name in enumerate(("SAKURA DREAM", "NEON NIGHT", "FROSTBITE", "CRIMSON")):
     window.pages["World Reborn"].select_pack(index)
     assert window.pages["World Reborn"].hero_title.text() == name
+# World Reborn's PREVIEW HERE must open the exact selected world.
+world = window.pages["World Reborn"]
+world.select_pack(2)
+world.open_collection.emit("FROSTBITE")
+assert window.gallery_pack == "FROSTBITE"
+assert window.stack.currentWidget() is window.pages["Redux Collection"]
+world.select_pack(0)
 window.navigate("Overview")
 assert window.page_title.text() == "Dashboard"
 # Four collection cards retain distinct worlds and working preview actions.
