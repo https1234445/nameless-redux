@@ -1097,7 +1097,13 @@ class ReduxWindow(QMainWindow):
             btn = GlowButton(f"{glyph}    " + {
                 "Overview": "Home", "World Reborn": "Redux Collection",
                 "Visuals Studio": "Visual Lab", "Redux Collection": "Gallery"
-            }.get(name, name))
+            }.get(name, name) + ({
+                "Overview": "\\n          Main Hub",
+                "World Reborn": "\\n          Worlds & Styles",
+                "Visuals Studio": "\\n          Before / After Editor",
+                "Redux Collection": "\\n          All Previews",
+                "Settings": "\\n          Preferences"
+            }.get(name, "")))
             btn.setObjectName("nav")
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked=False, n=name: self.navigate(n))
@@ -1883,6 +1889,7 @@ class ReduxWindow(QMainWindow):
         if folder is None:
             self.steam_status.setText("● ROB RUN NOT FOUND IN STEAM LIBRARIES")
             self.top_game_status.setText("● ROB RUN  /  NOT FOUND")
+            self.top_game_status.setStyleSheet("color:#F38C9D;")
             self._last_game_running = False
             self.top_launch_button.setProperty("gameRunning", False)
             self.top_launch_button.setText("▶  LAUNCH GAME")
@@ -1927,6 +1934,7 @@ class ReduxWindow(QMainWindow):
             ("● ROB RUN RUNNING" if running else "● ROB RUN INSTALLED")
             + "  •  " + str(folder))
         self.top_game_status.setText("● ROB RUN  /  " + ("RUNNING" if running else "INSTALLED"))
+        self.top_game_status.setStyleSheet("color:#36E48D;")
 
     def launch_steam_game(self):
         import webbrowser
