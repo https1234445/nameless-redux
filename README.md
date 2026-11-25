@@ -2,9 +2,9 @@
 
 NAMELESS is a desktop catalog of curated visual **concepts** for ROB RUN. The main screen is **Redux Collection**, with Sakura Dream, Neon Night, Frostbite, and Crimson.
 
-## Premium showcase direction (3.10 DEV)
+## Premium showcase direction (3.11 DEV)
 
-The Overview now opens with an original cinematic neon-city hero, an illustrated concept vehicle, large editorial headline and direct entry points into the interactive REDUX worlds and cosmetic garage. The artwork is drawn locally by Qt rather than fetched from external services or ROB RUN assets. It is static for low idle CPU/GPU overhead. This is a first visual-design pass, not a pixel-identical reproduction of any reference image.
+The Overview now opens with an original cinematic neon-city hero, an illustrated concept vehicle, large editorial headline and direct entry points into the interactive REDUX worlds and cosmetic garage. The artwork is drawn locally by Qt rather than fetched from external services or ROB RUN assets. It is static for low idle CPU/GPU overhead. The REDUX Collection now also uses cinematic cover art, editorial collection titles, compact category metadata and direct world/cosmetic actions. This is an evolving original design, not a pixel-identical reproduction of any reference image.
 
 ## Current features
 
