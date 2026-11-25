@@ -366,13 +366,15 @@ def build_loadout_payload(slots):
 
 class CosmeticGarage(QDialog):
     """Mix cosmetics from all four themes across five independently saved slots."""
-    def __init__(self, parent=None, initial_pack="SAKURA DREAM"):
+    def __init__(self, parent=None, initial_pack="SAKURA DREAM", focused=False):
         super().__init__(parent)
         if initial_pack not in PACK_NAMES:
             initial_pack = PACK_NAMES[0]
         self.setWindowTitle("NAMELESS REDUX  /  COSMETIC GARAGE")
         self._settings = QSettings("NAMELESS", "NAMELESS REDUX")
         self._restoring = False
+        self.focused = focused
+        self.focused_pack = initial_pack
         self.resize(1230, 835)
         self.setMinimumSize(900, 670)
 
@@ -459,8 +461,40 @@ class CosmeticGarage(QDialog):
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
 
+        if self.focused:
+            heading.setText(self.focused_pack + "  /  COSMETIC PREVIEWS")
+            caption.setText("Select a category to preview only this REDUX theme.")
+            self.category_select.hide()
+            select_title.hide()
+            subheading.hide()
+            for choice in self.slot_selects.values():
+                choice.hide()
+            for child in side.findChildren(QLabel):
+                if child.objectName() == "garageSlot":
+                    child.hide()
+            category_buttons = QHBoxLayout()
+            self.category_buttons = {}
+            for slot in SLOTS:
+                button = QPushButton(SLOT_TITLES[slot].upper())
+                button.setObjectName("garageCategoryButton")
+                button.setMinimumHeight(52)
+                button.setStyleSheet("font-size: 14px; font-weight: 900;")
+                button.clicked.connect(
+                    lambda checked=False, key=slot:
+                    self.category_select.setCurrentIndex(SLOTS.index(key)))
+                self.category_buttons[slot] = button
+                category_buttons.addWidget(button)
+            layout.insertLayout(2, category_buttons)
+            self.atlas_button.hide()
+            self.export_button.hide()
+            self.import_button.hide()
         self.category_select.currentIndexChanged.connect(self.update_preview)
-        self.restore_local_loadout()
+        if self.focused:
+            # Explicit pack navigation must never restore an unrelated mixed loadout.
+            for choice in self.slot_selects.values():
+                choice.setCurrentText(self.focused_pack)
+        else:
+            self.restore_local_loadout()
         self.update_preview()
         self.setStyleSheet("""
             QDialog { background: #101427; color: #F4F5FF; }
@@ -517,9 +551,16 @@ class CosmeticGarage(QDialog):
 
     def update_preview(self, *_):
         slot = SLOTS[self.category_select.currentIndex()]
-        pack = self.slot_selects[slot].currentText()
+        pack = self.focused_pack if self.focused else self.slot_selects[slot].currentText()
         self.canvas.set_concept(pack, slot)
         self.concept_name.setText(COSMETIC_TITLES[pack][slot])
+        if self.focused:
+            for key, button in self.category_buttons.items():
+                button.setChecked(key == slot)
+                button.setStyleSheet(
+                    "font-size: 14px; font-weight: 900; "
+                    + ("background: #8063BB;" if key == slot else
+                       "background: #2A294B;"))
         self.details.setText(PACK_STYLE[pack]["subtitle"] +
                              "\n\nOriginal design proposal; not a ROB RUN game asset.")
 
