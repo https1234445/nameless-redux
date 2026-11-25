@@ -1117,6 +1117,7 @@ class ReduxWindow(QMainWindow):
         sidebar_art = world_art("sakura_dream.jpg")
         if not sidebar_art.isNull():
             scenic = QLabel()
+            self.sidebar_scenic = scenic
             scenic.setObjectName("sidebarScenic")
             scenic.setPixmap(QPixmap.fromImage(sidebar_art).scaled(
                 192, 125, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
@@ -2298,6 +2299,14 @@ class ReduxWindow(QMainWindow):
         for cover in self.findChildren(ReduxCover):
             cover.update()
         self.gallery_canvas.update()
+        # Refresh cached Qt images immediately; no restart needed.
+        self.pages["World Reborn"].reload_art()
+        if hasattr(self, "sidebar_scenic"):
+            from world_reborn import art as world_art
+            image = world_art("sakura_dream.jpg")
+            if not image.isNull():
+                self.sidebar_scenic.setPixmap(QPixmap.fromImage(image).scaled(
+                    192, 125, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
         # A new real preview is only loaded if the player has not already
         # selected their own screenshot, which must take precedence.
         if not str(self.settings.value("preview/screenshot", "") or ""):
