@@ -12,11 +12,16 @@ from nameless_redux import ReduxWindow
 
 app = QApplication([])
 window = ReduxWindow()
-assert window.stack.count() == 9, "All nine workspace pages must exist"
-for name in ("Redux Collection", "Overview", "Visuals Studio", "Theme Lab", "Sound Library",
+assert window.stack.count() == 10, "All ten workspace pages must exist"
+for name in ("World Reborn", "Redux Collection", "Overview", "Visuals Studio", "Theme Lab", "Sound Library",
              "Crosshair Studio", "Profiles", "Game Center", "Settings"):
     window.navigate(name)
     assert window.stack.currentWidget() is window.pages[name], name
+window.navigate("World Reborn")
+assert window.pages["World Reborn"].hero_title.text() == "SAKURA DREAM"
+for index, name in enumerate(("SAKURA DREAM", "NEON NIGHT", "FROSTBITE", "CRIMSON")):
+    window.pages["World Reborn"].select_pack(index)
+    assert window.pages["World Reborn"].hero_title.text() == name
 window.navigate("Overview")
 assert window.page_title.text() == "Dashboard"
 # Four collection cards retain distinct worlds and working preview actions.
