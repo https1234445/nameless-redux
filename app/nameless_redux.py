@@ -1,4 +1,5 @@
 from ui_controls import ClickOnlyComboBox
+from startup_brand import app_icon, startup_splash
 import sys
 import json
 import hashlib
@@ -2953,6 +2954,11 @@ class ReduxWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
+    app.setWindowIcon(app_icon())
+    splash = startup_splash()
+    app.processEvents()
     window = ReduxWindow()
+    window.setWindowIcon(app_icon())
     window.show()
+    splash.finish(window)
     sys.exit(app.exec())
