@@ -5,6 +5,7 @@ modifies game assets and never communicates with the ROB RUN process.
 """
 from __future__ import annotations
 from ui_controls import ClickOnlyComboBox
+from art_pack import art_candidates
 
 import json
 import math
@@ -175,8 +176,7 @@ class CosmeticCanvas(QWidget):
             base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
             exe_dir = (Path(sys.executable).resolve().parent if getattr(
                 sys, "frozen", False) else Path(__file__).resolve().parent)
-            for root in (base / "assets", exe_dir / "assets"):
-                candidate = root / art_names[self.pack]
+            for candidate in art_candidates(art_names[self.pack]):
                 if candidate.is_file():
                     image = QImage(str(candidate))
                     if not image.isNull():
