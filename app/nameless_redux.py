@@ -193,7 +193,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.11.0-dev"
+VERSION = "3.12.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1995,6 +1995,10 @@ class ReduxWindow(QMainWindow):
         garage_button.clicked.connect(
             lambda checked=False: self.open_cosmetic_garage())
         showroom_intro.addWidget(garage_button)
+        atlas_button = QPushButton("THE REDUX ATLAS  /  ALL 20 CONCEPTS")
+        atlas_button.clicked.connect(
+            lambda checked=False: self.open_redux_atlas())
+        showroom_intro.addWidget(atlas_button)
         showroom_intro.addStretch()
         layout.addLayout(showroom_intro)
         grid = QGridLayout()
@@ -2084,6 +2088,16 @@ class ReduxWindow(QMainWindow):
             self, initial_pack=name,
             reduce_motion=not self.motion_check.isChecked())
         dialog.exec()
+
+    def open_redux_atlas(self):
+        """Open all twenty original concept artworks in a single gallery."""
+        from redux_atlas import CosmeticAtlas
+
+        def open_selected(pack, slot):
+            # Open the garage after the atlas closes, avoiding nested modal loops.
+            QTimer.singleShot(0, lambda: self.open_cosmetic_garage(pack))
+
+        CosmeticAtlas(self, on_select=open_selected).exec()
 
     def open_cosmetic_garage(self, name="SAKURA DREAM"):
         """Open original cosmetic loadout studio; no ROB RUN asset modification."""
