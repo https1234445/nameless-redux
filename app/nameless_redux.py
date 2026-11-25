@@ -193,7 +193,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.10.0-dev"
+VERSION = "3.11.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -2005,53 +2005,58 @@ class ReduxWindow(QMainWindow):
             ("FROSTBITE", "Icy blue / snow particles / crystalline atmosphere", "#A7E0F0", "#244C67", "Arctic Blue"),
             ("CRIMSON", "Red sky / ember particles / dramatic soundscape", "#E47E68", "#562A2E", "Sunset"),
         ]
+        pack_features = {
+            "SAKURA DREAM": ("01 / DREAMSCAPE", "PETAL BLOOM", "Pink dusk · Sakura blossoms · Soft acoustic concepts"),
+            "NEON NIGHT": ("02 / AFTER DARK", "ELECTRIC CITY", "Violet skyline · Electric trails · Synth atmosphere"),
+            "FROSTBITE": ("03 / WINTER SIGNAL", "ZERO DEGREE", "Frozen peaks · Crystalline particles · Cool tones"),
+            "CRIMSON": ("04 / LAST LIGHT", "BURNING HORIZON", "Red sunset · Ember trails · Dramatic soundscape"),
+        }
         for i, (name, detail, accent, shadow, palette) in enumerate(packs):
-            card, inner = self.card(name, detail)
+            card, inner = self.card(name)
+            card.setObjectName("reduxCollectionCard")
+            inner.setContentsMargins(16, 16, 16, 18)
+            inner.setSpacing(10)
             art = ReduxCover(name, accent, shadow)
+            art.setMinimumHeight(230)
             inner.insertWidget(0, art)
-            note = QLabel("CONCEPT ART / NOT AN INSTALLED GAME MOD")
-            note.setObjectName("muted")
-            inner.addWidget(note)
-            pack_features = {
-                "SAKURA DREAM": "Pink sky • Sakura weapon skins • Gentle gunshots • Petal hits",
-                "NEON NIGHT": "Violet night • Electric weapon skins • Synth shots • Neon sparks",
-                "FROSTBITE": "Icy sky • Frosted weapon skins • Crisp shots • Ice crystals",
-                "CRIMSON": "Crimson dusk • Ember weapon skins • Warm shots • Ember hits",
-            }
-            features = QLabel("FULL PACK PLAN  /  " + pack_features[name])
-            features.setWordWrap(True)
-            features.setObjectName("accent")
-            inner.addWidget(features)
-            cosmetics_detail = QLabel(
-                "COSMETIC GARAGE  /  Matching car • outfit • face mask • "
-                "backpack • weapon finish")
-            cosmetics_detail.setObjectName("muted")
-            cosmetics_detail.setWordWrap(True)
-            inner.addWidget(cosmetics_detail)
-            compatibility = QLabel(
-                "GAME INSTALL: UNAVAILABLE • Preview-only concept. "
-                "A verified supported installation method is required.")
-            compatibility.setWordWrap(True)
-            compatibility.setObjectName("muted")
-            inner.addWidget(compatibility)
-            demo = QPushButton("TRY LIVE DEMO  /  SKY + WEAPON + HIT FX")
+            number, tagline, mood = pack_features[name]
+            edition = QLabel(number + "   /   ORIGINAL REDUX CONCEPT")
+            edition.setObjectName("collectionEyebrow")
+            inner.insertWidget(1, edition)
+            headline = QLabel(tagline)
+            headline.setObjectName("collectionHeadline")
+            inner.insertWidget(2, headline)
+            mood_label = QLabel(mood)
+            mood_label.setObjectName("collectionMood")
+            mood_label.setWordWrap(True)
+            inner.addWidget(mood_label)
+            collection_stats = QLabel("01 WORLD   /   05 COSMETIC CATEGORIES   /   LIVE PREVIEW")
+            collection_stats.setObjectName("collectionEyebrow")
+            inner.addWidget(collection_stats)
+
+            actions = QHBoxLayout()
+            actions.setSpacing(8)
+            demo = QPushButton("EXPLORE WORLD   ↗")
+            demo.setObjectName("primaryAction")
             demo.clicked.connect(
                 lambda checked=False, n=name: self.open_redux_showroom(n))
-            inner.addWidget(demo)
-            cosmetics = QPushButton("VIEW WEAPONS / CARS / OUTFITS / MASKS / BAGS")
+            actions.addWidget(demo, 1)
+            cosmetics = QPushButton("VIEW COSMETICS")
             cosmetics.clicked.connect(
                 lambda checked=False, n=name: self.open_cosmetic_garage(n))
-            inner.addWidget(cosmetics)
-            activate = GlowButton("SELECT REDUX  ↗")
-            activate.setObjectName("primaryAction")
+            actions.addWidget(cosmetics, 1)
+            inner.addLayout(actions)
+
+            activate = QPushButton("APPLY LOOK TO NAMELESS")
+            activate.setToolTip("Only changes local NAMELESS previews; ROB RUN stays untouched.")
             activate.clicked.connect(
                 lambda checked=False, p=palette, n=name: self.activate_collection_pack(p, n))
             inner.addWidget(activate)
-            install = QPushButton("INSTALL INTO ROB RUN  /  UNAVAILABLE")
-            install.setEnabled(False)
-            install.setToolTip(
-                "Waiting for a verified, supported mod installation method.")
-            inner.addWidget(install)
+            compatibility = QLabel(
+                "CONCEPT ONLY   •   GAME INSTALL NOT AVAILABLE   •   NO GAME FILES CHANGED")
+            compatibility.setObjectName("collectionDisclaimer")
+            compatibility.setWordWrap(True)
+            inner.addWidget(compatibility)
             grid.addWidget(card, i // 2, i % 2)
         layout.addLayout(grid)
         active = self.settings.value("collection/active", "")
@@ -2822,6 +2827,15 @@ class ReduxWindow(QMainWindow):
             QLabel#muted { color: #99999D; font-size: 12px; }
             QLabel#accent { color: #D8AFFF; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
             QLabel#stat { color: #F7F2FF; font-size: 36px; font-weight: 800; }
+            QLabel#collectionEyebrow {
+                color: #B7A5E7; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+            }
+            QLabel#collectionHeadline {
+                color: #FFFFFF; font-size: 24px; font-weight: 900; letter-spacing: 1px;
+            }
+            QLabel#collectionMood { color: #D5D3E8; font-size: 12px; }
+            QLabel#collectionDisclaimer { color: #8C91AE; font-size: 10px; }
+
             QLabel#heroHeadline { color: #FFFFFF; font-size: 43px; font-weight: 900; letter-spacing: 1px; }
             QLabel#heroDescription { color: #E2DDF7; font-size: 12px; line-height: 1.4; }
             QFrame#card { background: transparent; border: 0px; }
