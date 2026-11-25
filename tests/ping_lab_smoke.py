@@ -33,6 +33,7 @@ assert results[0]["successes"] == 3
 dialog = PingLab()
 assert dialog.endpoint.count() == 2
 assert not dialog.export_button.isEnabled()
+dialog.last_endpoint = dialog.endpoint.currentText()
 dialog.show_result(report)
 assert dialog.export_button.isEnabled()
 assert "NOT" not in dialog.results.toPlainText() or dialog.last_result == report
