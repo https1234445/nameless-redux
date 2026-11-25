@@ -45,6 +45,12 @@ window.navigate("World Reborn")
 window.navigate("Visuals Studio")
 window.effect_sliders["brightness"].setValue(17)
 assert window.effects_preview._render_timer.isActive(), "Slider must debounce processing"
+window.compare_check.setChecked(False)
+window.effect_sliders["contrast"].setValue(122)
+assert not window.compare_check.isChecked(), "Editing effects must never reactivate comparison"
+assert not window.effects_preview.compare_enabled
+window.compare_check.setChecked(True)
+assert window.effects_preview.compare_enabled
 window.effects_preview.flush_effects()
 window.navigate("World Reborn")
 for index, name in enumerate(("SAKURA DREAM", "NEON NIGHT", "FROSTBITE", "CRIMSON")):
