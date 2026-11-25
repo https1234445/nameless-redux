@@ -22,7 +22,8 @@ assert window.pages["World Reborn"].hero_title.text() == "SAKURA DREAM"
 # Release gate: the collection must not contain the heavy Visual Lab.
 world = window.pages["World Reborn"]
 assert not hasattr(world, "split"), "Visual Lab must be separate from World Reborn"
-assert len(window.secondary_nav) == 5, "Keep extra tools available but collapsed"
+assert len(window.secondary_nav) == 4, "Keep extra tools available but collapsed"
+assert not window.nav_crosshair_studio.isHidden(), "Crosshair Studio must remain visible"
 assert all(button.isHidden() for button in window.secondary_nav), "Reference sidebar must show only five main destinations"
 window.more_tools_button.click()
 assert all(not button.isHidden() for button in window.secondary_nav)
