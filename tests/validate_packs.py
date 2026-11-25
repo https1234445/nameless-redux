@@ -20,10 +20,17 @@ for pack_id in sorted(expected):
     assert install["writes_game_files"] is False
     assert install["requires_official_mod_support"] is True
     components = pack["components"]
-    assert len(components) == 4
+    assert len(components) == 8
     assert {item["type"] for item in components} == {
-        "environment", "weapon_skins", "audio", "particles"
+        "environment", "weapon_skins", "audio", "particles",
+        "vehicle_skins", "outfits", "masks", "backpacks",
     }
+    garage = pack["cosmetic_garage"]
+    assert garage["preview"] == "original-qt-vector-concept"
+    assert garage["mixable_slots"] == [
+        "weapon", "vehicle", "outfit", "mask", "backpack"
+    ]
+    assert garage["game_asset_files_included"] is False
     assert all(item["status"] == "design" for item in components)
     performance = pack["performance"]
     assert 0 < performance["max_particle_count_per_impact"] <= 12
@@ -32,4 +39,4 @@ for pack_id in sorted(expected):
     assert performance["fps_gain_claimed"] is False
     assert performance["benchmarked"] is False
     assert all(pack["safety"].values())
-print("All four REDUX pack manifests validated")
+print("All four REDUX pack manifests and all 20 cosmetic concepts validated")
