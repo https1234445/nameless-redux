@@ -19,6 +19,23 @@ for name in ("World Reborn", "Redux Collection", "Overview", "Visuals Studio", "
     assert window.stack.currentWidget() is window.pages[name], name
 window.navigate("World Reborn")
 assert window.pages["World Reborn"].hero_title.text() == "SAKURA DREAM"
+# Release gate: the collection must not contain the heavy Visual Lab.
+world = window.pages["World Reborn"]
+assert not hasattr(world, "split"), "Visual Lab must be separate from World Reborn"
+assert len(world.angle_buttons) == 5
+assert all(not button.icon().isNull() for button in world.angle_buttons), "Missing car thumbnails"
+# All reference-style top tabs navigate to their real workspace pages.
+for destination, tab in window.quick_tab_buttons.items():
+    tab.click()
+    assert window.stack.currentWidget() is window.pages[destination], destination
+    assert tab.isChecked(), destination
+window.navigate("World Reborn")
+# Slider changes must be deferred, never synchronously force pixel processing.
+window.navigate("Visuals Studio")
+window.effect_sliders["brightness"].setValue(17)
+assert window.effects_preview._render_timer.isActive(), "Slider must debounce processing"
+window.effects_preview.flush_effects()
+window.navigate("World Reborn")
 for index, name in enumerate(("SAKURA DREAM", "NEON NIGHT", "FROSTBITE", "CRIMSON")):
     window.pages["World Reborn"].select_pack(index)
     assert window.pages["World Reborn"].hero_title.text() == name
