@@ -1,3 +1,4 @@
+from ui_controls import ClickOnlyComboBox
 """FPS LAB: read-only hardware diagnostics and honest, user-entered FPS comparisons.
 
 No registry changes, process injection, game-file edits, or invented FPS gains.
@@ -120,7 +121,7 @@ class FPSLab(QDialog):
         refresh.clicked.connect(self.refresh_hardware)
         root.addWidget(refresh)
         root.addWidget(QLabel("OPTIMIZATION GUIDE"))
-        self.profile = QComboBox()
+        self.profile = ClickOnlyComboBox()
         self.profile.addItems(PROFILES)
         self.profile.currentTextChanged.connect(self.refresh_guide)
         root.addWidget(self.profile)
