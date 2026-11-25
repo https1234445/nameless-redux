@@ -14,6 +14,7 @@ from PySide6.QtGui import QColor, QPainter, QPen, QBrush, QFont, QLinearGradient
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from redux_showroom import ReduxShowroom
 from redux_armory import CosmeticGarage
+from premium_hero import PremiumHero
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QStackedWidget, QListWidget,
@@ -192,7 +193,7 @@ def stage_redux_pack(archive_path, destination):
     return len(manifest["files"])
 
 APP_NAME = "NAMELESS REDUX"
-VERSION = "3.9.0-dev"
+VERSION = "3.10.0-dev"
 PRESETS = {
     "Ocean Deep": "#087f95",
     "Lagoon": "#12a6a0",
@@ -1150,20 +1151,23 @@ class ReduxWindow(QMainWindow):
         page = QWidget()
         l = QVBoxLayout(page)
         l.setSpacing(20)
-        hero = GradientHero()
+        hero = PremiumHero()
         self.hero = hero
         hero.setObjectName("heroCard")
-        hero.setMinimumHeight(224)
+        hero.setMinimumHeight(302)
         hl = QVBoxLayout(hero)
-        hl.setContentsMargins(34, 30, 34, 30)
+        hl.setContentsMargins(38, 31, 34, 28)
         hl.setSpacing(10)
-        tag = QLabel("N A M E L E S S   /   ROB RUN EDITION")
+        tag = QLabel("N A M E L E S S   /   ROB RUN EDITION  •  CONCEPT SHOWCASE")
         tag.setObjectName("accent")
         hl.addWidget(tag)
-        headline = ShimmerText("BUILT FOR YOUR GAME.")
+        headline = QLabel("MAKE EVERY\nRUN YOURS.")
         headline.setObjectName("heroHeadline")
         hl.addWidget(headline)
-        desc = QLabel("Visual Lab    /    Steam Connect    /    Profiles    /    Sound Studio")
+        desc = QLabel(
+            "FOUR ORIGINAL WORLDS  /  TWENTY COSMETIC CONCEPTS\n"
+            "Build your signature look. Preview it safely inside NAMELESS."
+        )
         desc.setObjectName("heroDescription")
         hl.addWidget(desc)
         hl.addStretch()
@@ -1173,14 +1177,11 @@ class ReduxWindow(QMainWindow):
         open_visuals.setObjectName("primaryAction")
         open_visuals.clicked.connect(lambda: self.navigate("Visuals Studio"))
         hero_actions.addWidget(open_visuals)
-        open_steam = QPushButton("STEAM CONNECT")
-        open_steam.clicked.connect(lambda: self.navigate("Game Center"))
-        hero_actions.addWidget(open_steam)
-        showroom = QPushButton("LIVE REDUX SHOWROOM")
+        showroom = QPushButton("EXPLORE REDUX WORLDS")
         showroom.clicked.connect(
             lambda checked=False: self.open_redux_showroom())
         hero_actions.addWidget(showroom)
-        garage = QPushButton("COSMETIC GARAGE")
+        garage = QPushButton("BUILD YOUR LOOK")
         garage.clicked.connect(
             lambda checked=False: self.open_cosmetic_garage())
         hero_actions.addWidget(garage)
@@ -1224,7 +1225,7 @@ class ReduxWindow(QMainWindow):
         steam_shortcut_layout.addWidget(steam_launch)
         overview_bottom.addWidget(steam_shortcut, 2)
         l.addLayout(overview_bottom)
-        note = QLabel("Preview-only effects  •  Local profiles  •  No game memory modification")
+        note = QLabel("ORIGINAL CONCEPT ART   •   STANDALONE PREVIEWS   •   NO GAME-FILE MODIFICATIONS")
         note.setObjectName("muted")
         note.setWordWrap(True)
         l.addWidget(note)
@@ -2806,7 +2807,7 @@ class ReduxWindow(QMainWindow):
             }
             QLabel#status { color: #9CA9E9; font-size: 11px; font-weight: 800; }
             QLabel#brand { color: #FAF8F3; font-size: 19px; font-weight: 800; letter-spacing: 3px; }
-            QLabel#subbrand { color: #E99C62; font-size: 9px; letter-spacing: 1px; }
+            QLabel#subbrand { color: #B7A0FF; font-size: 9px; letter-spacing: 1px; }
             QLabel#version { color: #77777A; font-size: 10px; }
             QLabel#pageTitle { color: #F8F7F4; font-size: 29px; font-weight: 700; }
 
@@ -2816,10 +2817,10 @@ class ReduxWindow(QMainWindow):
                 color: #B5A69B; font-size: 11px; padding: 8px 2px;
             }
             QLabel#muted { color: #99999D; font-size: 12px; }
-            QLabel#accent { color: #F0A66D; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
-            QLabel#stat { color: #F5F2EB; font-size: 36px; font-weight: 700; }
-            QLabel#heroHeadline { color: #FFF9F2; font-size: 29px; font-weight: 800; }
-            QLabel#heroDescription { color: #C4C1BD; font-size: 12px; }
+            QLabel#accent { color: #D8AFFF; font-size: 10px; font-weight: 700; letter-spacing: 2px; }
+            QLabel#stat { color: #F7F2FF; font-size: 36px; font-weight: 800; }
+            QLabel#heroHeadline { color: #FFFFFF; font-size: 43px; font-weight: 900; letter-spacing: 1px; }
+            QLabel#heroDescription { color: #E2DDF7; font-size: 12px; line-height: 1.4; }
             QFrame#card { background: transparent; border: 0px; }
             QFrame#statCard { background: #202542; border: 1px solid #777BC3; border-radius: 13px; }
             QFrame#statCard:hover { border-color: #E3B3FF; background: #292D50; }
