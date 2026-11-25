@@ -1410,9 +1410,15 @@ class ReduxWindow(QMainWindow):
 
         self.build_pages()
         self.build_collection()
-        # Home is always built from real Qt widgets; no screenshot overlay,
-        # external JPEG or invisible coordinate-based click zones are needed.
+        # The approved 1672x941 screenshot skins the ENTIRE Home window,
+        # including the sidebar and top bar. Each action is a real Qt button.
+        reference = Path(__file__).resolve().parent / "assets" / "home_full_reference.png"
         self.exact_home = None
+        if reference.is_file():
+            self.exact_home = FunctionalReferenceHome(
+                reference, self.navigate, self.launch_steam_game, self.centralWidget())
+            self.exact_home.setGeometry(self.centralWidget().rect())
+            self.exact_home.hide()
         # Wheel must scroll the page regardless of the widget under the pointer.
         QApplication.instance().installEventFilter(self)
         self.apply_theme_colors()
@@ -1543,9 +1549,6 @@ class ReduxWindow(QMainWindow):
         self.stat_values = []
         # When bundled, the approved design is the actual Home background;
         # controls remain native Qt widgets, not image click-coordinate hacks.
-        reference = Path(__file__).resolve().parent / "assets" / "home_full_reference.png"
-        if reference.is_file():
-            page = FunctionalReferenceHome(reference, self.navigate, self.launch_steam_game)
         self.add_page("Overview", page)
 
         # Visuals
